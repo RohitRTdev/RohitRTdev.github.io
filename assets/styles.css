@@ -86,14 +86,12 @@ a:hover {
 }
 
 .cookie-button:hover {
-    background-color: #f3ef0c; /* Change color on hover if desired */
+    background-color: #f3ef0c; 
 }
 
 img {
     opacity: 0;
     position:fixed;
-    text-align:center;
-    margin:auto;
     height:45%;
     width:33%;
     top:25.3%;
@@ -106,13 +104,18 @@ img.show {
 }
 
 .message {
-    font-size: 3em;
-    color: #8b0000; /* Blood red color */
+    font-size: 5em;
+    font-weight:bold;
+    color: #f70000; 
     opacity: 0;
+    display: flex;
     position:fixed;
-    top:50%;
-    left:40%;
+    top:0%;
+    left:0%;
+    justify-content: center;
+    align-items: center;
 }
+
 
 @keyframes grow {
     0% {
@@ -127,6 +130,8 @@ img.show {
     animation: grow 2s ease-in-out forwards;
     opacity: 1;
     transition: opacity 2s ease;
+    width:100%;
+    height:100%;
 }
 
 .dim-layer {
