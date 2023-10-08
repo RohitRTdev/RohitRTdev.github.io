@@ -54,7 +54,7 @@
     <script>document.addEventListener('DOMContentLoaded', function() {
     setTimeout(function () { 
         document.querySelector('.cookie-info').classList.add('show');
-}, 1000);})
+}, 5000);})
 
 
     function loadAnimation(msg) {
@@ -85,13 +85,13 @@
         hideCookieInfo();
         dimBottomLayer();
         if(param == 1) {
-            loadAnimation("Master is pleased");
             playSound();
+            loadAnimation("Master is pleased");
         }
         else {
+            playSound();
             showPicture();
             loadAnimation("I will report this to master");
-            playSound();
         }
     }
 
