@@ -1,0 +1,135 @@
+body {
+    background-color: black;
+    color: white;
+}
+
+h1 {
+    text-align: center;
+    font-size: 2.2em;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+.wrapper {
+    width:50%;
+    margin: auto;
+    line-height: 1.5em;
+    font-size: 1.5em;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.code-block {   
+    display:flex;
+    text-align: center;
+    align-items: center;
+    background-color: rgb(202, 201, 201);
+    border-radius:10px;
+    font-family:monospace;
+    color:black;
+    font-size:1.2em;
+    white-space: nowrap;
+    overflow-x: auto;
+    min-height: 10%;
+}
+
+.cookie-info {
+    background-color: white;
+    color:black;
+    text-align:center;
+    width:100%;
+    min-height: 15%;
+    position:fixed;
+    border-radius:10px;
+    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    font-weight: bold;
+    font-size:1.2em;
+    left:0%;
+    right:0%;
+    bottom:0%;
+    opacity:0;
+    transition: opacity 2s ease;
+}
+
+.cookie-info.show {
+    opacity: 1;
+}
+a:link {
+    color: green;
+}
+
+a:visited {
+    color: rgb(7, 185, 131);
+}
+
+a:hover {
+    color: rgb(5, 241, 5);
+    transition-duration:0.5s;
+}
+
+@media (max-width:700px) {
+    .wrapper {
+        font-size:1.1em;
+    }
+
+}
+
+.cookie-button {
+    background-color: #adab06c9;
+    color: black;
+    height:60px;
+    width:calc(3*height);
+    margin: 10px;
+    font-size:1.3em;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition-duration: 0.5s;   
+}
+
+.cookie-button:hover {
+    background-color: #f3ef0c; /* Change color on hover if desired */
+}
+
+img {
+    opacity: 0;
+    position:fixed;
+    text-align:center;
+    margin:auto;
+    height:45%;
+    width:33%;
+    top:25.3%;
+    left:33.3%;
+}
+
+img.show {
+    opacity:1;
+    transition: opacity 2s ease;
+}
+
+.message {
+    font-size: 3em;
+    color: #8b0000; /* Blood red color */
+    opacity: 0;
+    position:fixed;
+    top:50%;
+    left:40%;
+}
+
+@keyframes grow {
+    0% {
+        transform: scale(0);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.animate {
+    animation: grow 2s ease-in-out forwards;
+    opacity: 1;
+    transition: opacity 2s ease;
+}
+
+.dim-layer {
+    opacity:0.2;
+    transition: opacity 1s ease;
+}

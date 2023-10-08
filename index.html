@@ -1,0 +1,97 @@
+<html>
+    <head>
+        <title>
+            C compiler tutorial
+        </title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap">
+        <link rel="stylesheet" href="assets/styles.css">
+    </head>
+    <body>
+        <h1>Writing a C compiler from scratch</h1>
+        <div class="wrapper">
+            <p>
+                Writing a compiler can be challenging and fun. It's fun if you simply take it up as an exercise to learn about lexing, 
+                parsing and code generation. Not so fun if you try to implement an actual general purpose language in all it's glory.
+            </p>
+            <p>
+                Check out this repo to see how I made a simple C compiler<br>
+            <a href="https://github.com/RohitRTdev/simc">https://github.com/RohitRTdev/simc</a>
+            </p>
+            <p>
+                To keep this process enjoyable, we will only be building a C compiler that supports a subset of the language features. 
+                For more info on the exact features implemented, please visit the repo. With that in mind, let's get onto it.
+            </p>
+            <p>
+                To write any compiler, we need to do 3 main tasks
+            </p>
+            <ol>
+                <li>Lexing</li>
+                <li>Parsing</li>
+                <li>Evaluation and code-generation</li>
+            </ol>
+            <p>
+                To understand these 3 processes, let's first see what we are even trying to do. Whenever faced with a complex task, take a simple example first and see how the solution looks for that case alone, and then work on generalizing it.
+                <br><br>Let's consider the code:
+            </p>
+            <div class="code-block">
+                <span style="flex-grow:1;"><span style="color:purple;">int </span>a = b + c * d++ - *m;</span>
+            </div>            
+        </div>
+        <div class="cookie-info">
+            <p>Oii baby fingers. Did you enjoy the site so far ?</p>
+            <button class="cookie-button" onclick="acceptButton(0)">Yes!😊</button>
+            <button class="cookie-button" onclick="acceptButton(1)">Yes!!🤗</button>
+        </div>
+        <img src="assets/baby.jpg">
+        <p class="message">
+            Master is pleased
+        </p>
+    </body>
+    <script>document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function () { 
+        document.querySelector('.cookie-info').classList.add('show');
+}, 1000);})
+
+
+    function loadAnimation(msg) {
+        let message = document.querySelector(".message");
+        message.innerHTML = msg;
+        message.classList.add('animate');
+    }
+
+    function showPicture() {
+        document.querySelector("img").classList.add('show');
+    }
+
+    function hideCookieInfo() {
+        document.querySelector(".cookie-info").classList.remove('show');
+    }
+
+    function playSound() {
+        const audio = new Audio('assets/church-bell.wav'); 
+        audio.play();
+    }
+
+    function dimBottomLayer() {
+        document.querySelector(".wrapper").classList.add('dim-layer');
+        document.querySelector("h1").classList.add('dim-layer');
+    }
+
+    function acceptButton(param) {
+        hideCookieInfo();
+        dimBottomLayer();
+        if(param == 1) {
+            loadAnimation("Master is pleased");
+            playSound();
+        }
+        else {
+            showPicture();
+            loadAnimation("I will report this to master");
+            playSound();
+        }
+    }
+
+</script>
+</html>
