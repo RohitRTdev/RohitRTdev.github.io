@@ -1,16 +1,47 @@
+<!DOCTYPE html>
 <html>
     <head>
         <title>
             C compiler tutorial
         </title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap">
-        <link rel="stylesheet" href="assets/styles.css">
-    </head>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100&family=Roboto:wght@300&display=swap">
+        <link rel="stylesheet" href="styles.css">
+   </head>
     <body>
-        <h1>Writing a C compiler from scratch</h1>
-        <div class="wrapper">
+        <div id="content-navigation-anim" style="display:none;padding-top:10%">
+            <p style="font-family:Inter,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif;font-size:2em">Some content will go here. Not decided yet</p>
+            <ul style="font-size:2em;font-weight:normal;list-style:none;line-height:2em">
+                <li>Content-1</li>
+                <li>Content-2</li>
+                <li>Content-3</li>
+            </ul>
+        </div>
+        <div class="navbar">
+            <div class="icon" onclick="toggleContentBar()">
+                <div class="bar bar1"></div>
+                <div class="bar bar2"></div>
+                <div class="bar bar3"></div>
+            </div>
+            <img src="assets/logo.png">
+        </div>
+        <div style="height:3rem"></div>
+        <h1 id="header-content-0">Writing a C compiler from scratch</h1>
+        <h1 id="header-content-1" style="display:none">Writing C compiler - Part 1, Lexing</h1>
+        <div class="article-block">
+            <p><b>Contents</b></p>
+            <ul>
+                <li id="option-0" style="color:rgb(0, 119, 255);font-weight:bold;" onclick="chooseOption(0)">Introduction</li>
+                <li id="option-1" onclick="chooseOption(1)">Lexing</li>
+                <!-- <li id="option-2" onclick="chooseOption(2)">Parsing</li>
+                <li id="option-3" onclick="chooseOption(3)">Evaluation</li> -->
+            </ul>
+        </div>
+        <div class="wrapper" id="content-0">
             <p>
                 Writing a compiler can be challenging and fun. It's fun if you simply take it up as an exercise to learn about lexing, 
                 parsing and code generation. Not so fun if you try to implement an actual general purpose language in all it's glory.
@@ -36,64 +67,168 @@
                 <br><br>Let's consider the code:
             </p>
             <div class="code-block">
-                <span style="flex-grow:1;"><span style="color:purple;">int </span>a = b + c * d++ - *m;</span>
-            </div>            
-        </div>
-        <div class="cookie-info">
-            <p>Oii baby fingers. Did you enjoy the site so far ?</p>
-            <button class="cookie-button" onclick="acceptButton(1)">Yes!!🤗</button>
-            <button class="cookie-button" onclick="acceptButton(0)">No!😢</button>
-        </div>
-        <img src="assets/baby.jpg">
-        <div class="message">
+                <span style="flex-grow:1;"><span style="color:rebeccapurple;">int </span>a = b + c * d++ - *m;</span>
+            </div> 
             <p>
-                Master is pleased
+                How do we generate the code for this above statement. Before even answering this question, 
+                we need to first ask ourselves what architecture do we want to generate code for.
+                I have decided to use the famous x64 / AMD64 architecture since it is the most widely used one in consumer PC's and laptops.
+            </p>
+            <p>
+                Now that we've decided the arch, let's see how the assembly for the code snippet above looks like.
+            </p>
+            <div class="code-block">
+                <p>
+                    //Anything that starts with '//' is a comment <br>                                      
+                    //x64 assembly in att syntax<br>                                                    
+                    //d++<br>
+                    movl -12(%rbp), %ebx //Load 'd'(assume it's stored at stack location rbp-12)<br> 
+                    addl 1, -12(%rbp) //Increment 'd'<br>
+                    //c * d++<br>
+                    movl -8(%rbp), %eax //Load 'c'<br>
+                    imull %ebx, %eax // Signed multiply c * d++, now res0 = c * d++<br>
+                    //*m<br>
+                    movq -24(%rbp), %rbx //Load 'm'(We're loading into rbx since pointer is 8 bytes)<br>
+                    movl (%rbx), %ebx //Dereference pointer 'm', so res1 = *m<br>
+                    //sub res1 from res0<br>
+                    subl %eax, %ebx // Now res2 = res0 - res1<br>
+                    //b + res2<br>
+                    addl (%rbp), %ebx // This gives us the final result<br>
+                    //a = final_result<br>
+                    movl %ebx, -28(%rbp) //Store final result at 'a'
+                </p>
+            </div>
+            <p>
+                Variables b, c and d are assumed to be of type int and m is assumed to be of type int* .
+            </p>
+            <p>
+                Notice a few things here. First the variable's location. In C, variables are mostly stored in the stack, and it grows downwards in x64 arch. This is not the case always tho(variables could also be located in static memory or heap). Also notice the offsets at which the variables are stored. They are allocated in such a way that all the variables are aligned on their natural boundary( int variables are aligned on 4 byte boundaries and pointers are aligned on 8 byte boundaries).
             </p>
         </div>
+        <div class="wrapper" id="content-1" style="display:none">
+            <p>
+                Now that we've generated the code, let's see how to make our compiler do this. To perform this, what should we do first?
+            </p>
+            <p>
+                The compiler will only be given an input file, which contains a huge string. 
+                We need to make sense of this string, i.e convert it into symbols that the C language understands. 
+                This is where step 1 comes in Lexing. In this step, we break the input set of characters into tokens that our compiler understands.
+            </p>
+            <p>
+                After lexing, we should generate a list of tokens from our input string
+            </p>
+        </div>
+        <div class="navigator">
+            <hr style="border-color:grey">
+            <span onclick="choosePrevOption()" id="prev-tab" style="display:none">Prev</span>
+            <span onclick="chooseNextOption()" id="next-tab">Next</span>
+        </div>
+    <script>
+        var existingOption = 0;
+        
+        function setNavTab() {
+            let prevTab = document.getElementById("prev-tab");
+            let nextTab = document.getElementById("next-tab");
+            
+            if(existingOption == 0) {
+                prevTab.style.display = "none";
+            }
+            else {
+                prevTab.style.display = "";
+            }
+            
+            if(existingOption == 1) {
+                nextTab.style.display = "none";
+            }
+            else {
+                nextTab.style.display = "";
+            }
+        }
+        
+        function chooseOption(option) {
+            if(option == existingOption)
+                return;
+
+            //Change the option highlight
+            let opt = document.getElementById("option-"+existingOption);
+            opt.style.fontWeight = "normal";
+            opt.style.color = "";
+
+            let newOpt = document.getElementById("option-"+option);
+            newOpt.style.fontWeight = "bold";
+            newOpt.style.color = "rgb(0, 119, 255)";
+
+            
+            //Change the content
+            opt = document.getElementById("content-"+existingOption);
+            opt.style.display = "none";
+            newOpt = document.getElementById("content-"+option);
+            newOpt.style.display = "";
+            opt = document.getElementById("header-content-"+existingOption);
+            opt.style.display = "none";
+            newOpt = document.getElementById("header-content-"+option);
+            newOpt.style.display = "";
+            
+            existingOption = option;
+            setNavTab();
+        }
+
+        function chooseNextOption() {
+            var option = existingOption + 1;
+            chooseOption(option);
+        }
+
+        function choosePrevOption() {
+            var option = existingOption - 1;
+            chooseOption(option);
+        }
+
+
+        var isContentDisplayed = false;
+        
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        async function toggleContentBar() {
+
+            //Display the contents bar
+            let anim = document.getElementById("content-navigation-anim");
+
+            if(isContentDisplayed) {
+                anim.style.opacity = "0";
+                await sleep(100);
+                anim.style.display = "none";
+            }
+            else {
+                anim.style.display = "block";
+                await sleep(100);
+                anim.style.opacity = "0.8";
+            }
+
+            //Transform the menu icon
+            let menuIcon = document.querySelector(".navbar .icon");
+            menuIcon.classList.toggle("animate-bar");
+
+            //Shift the menu icon
+            let img = document.querySelector(".navbar img");
+            
+            if(isContentDisplayed) {
+                //Hide img first
+                menuIcon.style.right = "95%"; 
+                img.style.visibility = "visible";
+                await sleep(500);
+                menuIcon.style.left = "0";   
+            }
+            else {
+                menuIcon.style.right = "0";
+                menuIcon.style.left = "unset";
+                img.style.visibility = "hidden";
+            }
+            
+            isContentDisplayed = !isContentDisplayed;
+
+        }
+    </script>
     </body>
-    <script>document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function () { 
-        document.querySelector('.cookie-info').classList.add('show');
-}, 5000);})
-
-
-    function loadAnimation(msg) {
-        let message = document.querySelector(".message");
-        message.innerHTML = msg;
-        message.classList.add('animate');
-    }
-
-    function showPicture() {
-        document.querySelector("img").classList.add('show');
-    }
-
-    function hideCookieInfo() {
-        document.querySelector(".cookie-info").classList.remove('show');
-    }
-
-    function playSound() {
-        const audio = new Audio('assets/church-bell.wav'); 
-        audio.play();
-    }
-
-    function dimBottomLayer() {
-        document.querySelector(".wrapper").classList.add('dim-layer');
-        document.querySelector("h1").classList.add('dim-layer');
-    }
-
-    function acceptButton(param) {
-        hideCookieInfo();
-        dimBottomLayer();
-        if(param == 1) {
-            playSound();
-            loadAnimation("Master is pleased");
-        }
-        else {
-            playSound();
-            showPicture();
-            loadAnimation("I will report this to master");
-        }
-    }
-
-</script>
 </html>
