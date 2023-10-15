@@ -11,22 +11,27 @@
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap">
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100&family=Roboto:wght@300&display=swap">
         <link rel="stylesheet" href="styles.css">
-   </head>
+    </head>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-CBJWK8BNDP"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        
+
         gtag('config', 'G-CBJWK8BNDP');
-    </script><body>
-        <div id="content-navigation-anim" style="display:none;padding-top:10%">
-            <p style="font-family:Inter,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif;font-size:2em">Some content will go here. Not decided yet</p>
-            <ul style="font-size:2em;font-weight:normal;list-style:none;line-height:2em">
-                <li>Content-1</li>
-                <li>Content-2</li>
-                <li>Content-3</li>
-            </ul>
+    </script>
+    <body>
+        <div id="content-navigation-anim" style="display:none">
+            <div id="content-navigation-body">
+                <p style="font-family:Inter,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif;font-size:3em">
+                    Contents
+                </p>
+                <ul style="font-size:2em;font-weight:normal;list-style:none;line-height:2em;
+                font-family:Inter,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif">                                                                                                               
+                    <li class="make-bold-0" style="font-weight:bold">Introduction</li>                                                                                                                                                                      
+                    <li class="make-bold-1">Lexing</li>                                                                                                                                                                      
+                </ul>                                                                                                                                                                                       
+            </div>
         </div>
         <div class="navbar">
             <div class="icon" onclick="toggleContentBar()">
@@ -42,8 +47,8 @@
         <div class="article-block">
             <p><b>Contents</b></p>
             <ul>
-                <li id="option-0" style="color:rgb(0, 119, 255);font-weight:bold;" onclick="chooseOption(0)">Introduction</li>
-                <li id="option-1" onclick="chooseOption(1)">Lexing</li>
+                <li class="make-bold-0" id="option-0" style="color:rgb(0, 119, 255);font-weight:bold;" onclick="chooseOption(0)">Introduction</li>
+                <li class="make-bold-1" id="option-1" onclick="chooseOption(1)">Lexing</li>
                 <!-- <li id="option-2" onclick="chooseOption(2)">Parsing</li>
                 <li id="option-3" onclick="chooseOption(3)">Evaluation</li> -->
             </ul>
@@ -131,8 +136,7 @@
             <span onclick="chooseNextOption()" id="next-tab">Next</span>
         </div>
     <script>
-        var existingOption = 0;
-        
+        var existingOption = 0;        
         function setNavTab() {
             let prevTab = document.getElementById("prev-tab");
             let nextTab = document.getElementById("next-tab");
@@ -157,11 +161,15 @@
                 return;
 
             //Change the option highlight
+            let make_bold = document.querySelector(".make-bold-"+existingOption);
             let opt = document.getElementById("option-"+existingOption);
+            make_bold.style.fontWeight = "normal";
             opt.style.fontWeight = "normal";
             opt.style.color = "";
 
+            let make_bold_new = document.querySelector(".make-bold-"+option);
             let newOpt = document.getElementById("option-"+option);
+            make_bold_new.style.fontWeight = "bold";
             newOpt.style.fontWeight = "bold";
             newOpt.style.color = "rgb(0, 119, 255)";
 
@@ -198,19 +206,20 @@
         }
         
         async function toggleContentBar() {
-
             //Display the contents bar
             let anim = document.getElementById("content-navigation-anim");
-
+            let body = document.querySelector("body");
             if(isContentDisplayed) {
                 anim.style.opacity = "0";
                 await sleep(100);
                 anim.style.display = "none";
+                body.style.overflow = "auto";
             }
             else {
                 anim.style.display = "block";
                 await sleep(100);
                 anim.style.opacity = "0.8";
+                body.style.overflow = "hidden";
             }
 
             //Transform the menu icon

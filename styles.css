@@ -104,6 +104,7 @@ h1 {
 }
 
 .navbar .icon {
+    display: none;
     width: 2.8%;
     padding: 2px;
     position: absolute;
@@ -140,11 +141,20 @@ h1 {
     height: 100%;
     opacity: 0;
     background-color: black;
-    position: absolute;
+    position: fixed;
     left: 0;
     top: 0;
-    overflow: hidden;
     transition: opacity 0.5s ease;
+}
+
+#content-navigation-body {
+    position: relative;
+    width: 100%;
+    height: 90%;
+    top: 10%;
+    left: 0%;
+    scrollbar-width: none;
+    overflow: auto;
 }
 
 @media (max-width:600px) {
@@ -157,6 +167,7 @@ h1 {
 
     .navbar .icon {
         width: 10%;
+        display: block;
     }
 
     .navbar .icon:hover {
