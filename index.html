@@ -21,6 +21,8 @@
         gtag('config', 'G-CBJWK8BNDP');
     </script>
     <body>
+        <div id="hor-scroll-bar" style="display:block;position:fixed;top:0;left:0;
+        background-color:orange;height:1vh;"></div>
         <div id="content-navigation-anim" style="display:none">
             <div id="content-navigation-body">
                 <p style="font-family:Inter,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif;font-size:3em">
@@ -136,7 +138,14 @@
             <span onclick="chooseNextOption()" id="next-tab">Next</span>
         </div>
     <script>
-        var existingOption = 0;        
+        var existingOption = 0;    
+
+        let scroll = document.getElementById("hor-scroll-bar");
+        let body = document.querySelector("body");
+        body.onscroll = (event) => {
+            scroll.style.width = 100 * (window.scrollY / (body.scrollHeight - window.innerHeight)) + "%";
+        };
+
         function setNavTab() {
             let prevTab = document.getElementById("prev-tab");
             let nextTab = document.getElementById("next-tab");
@@ -208,7 +217,6 @@
         async function toggleContentBar() {
             //Display the contents bar
             let anim = document.getElementById("content-navigation-anim");
-            let body = document.querySelector("body");
             if(isContentDisplayed) {
                 anim.style.opacity = "0";
                 await sleep(100);

@@ -96,7 +96,7 @@ h1 {
 }
 
 .navbar {
-    width: 98vw;
+    width: 100%;
     display: flex;
     justify-content: center;
     text-align: center;
