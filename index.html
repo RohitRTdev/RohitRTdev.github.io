@@ -134,8 +134,10 @@
         </div>
         <div class="navigator">
             <hr style="border-color:grey">
-            <span onclick="choosePrevOption()" id="prev-tab" style="display:none">Prev</span>
-            <span onclick="chooseNextOption()" id="next-tab">Next</span>
+            <div class="add-span-margin">
+                <span onclick="choosePrevOption()" id="prev-tab" style="display:none">Prev</span>
+                <span onclick="chooseNextOption()" id="next-tab">Next</span>
+            </div>
         </div>
     <script>
         var existingOption = 0;    
@@ -225,6 +227,7 @@
                 body.style.overflow = "auto";
             }
             else {
+                window.scroll(0,0);
                 anim.style.display = "block";
                 await sleep(100);
                 anim.style.opacity = "0.8";

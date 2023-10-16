@@ -77,6 +77,10 @@ h1 {
     margin: auto;
 }
 
+.add-span-margin {
+    margin: 2% 0;
+}
+
 .navigator span{
     font-family: Inter,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif;
     font-size: 2em;
@@ -157,7 +161,7 @@ h1 {
     overflow: auto;
 }
 
-@media (max-width:600px) {
+@media (max-width:720px) {
     .wrapper {
         width:90%;
         font-size:1em;
