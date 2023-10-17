@@ -62,7 +62,7 @@ h1 {
 
 .wrapper a {
     color: green;
-    font-size: 1em;
+    font-size: 0.9em;
     text-decoration: none;
     transition: color 0.5s ease;
 }
@@ -99,27 +99,21 @@ h1 {
     color: blue;
 }
 
-.navbar {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    text-align: center;
-    margin: auto;
-}
-
-.navbar .icon {
+#nav-icon {
     display: none;
-    width: 2.8%;
-    padding: 2px;
+    width: 10%;
+    max-width: 70px;
     position: absolute;
-    left:0;
-    top:0;
+    left: 0;
+    top: 0;
     right:95%;
     transition: left 0.5s ease, right 0.5s ease;
+    z-index: 2;
     cursor: pointer;
+    padding: 2px;
 }
 
-.navbar .icon .bar, .bar1, .bar2, .bar3 {
+#nav-icon .bar, .bar1, .bar2, .bar3 {
     width:100%;
     height:3px;
     background-color:white;
@@ -148,6 +142,7 @@ h1 {
     position: fixed;
     left: 0;
     top: 0;
+    z-index: 1;
     transition: opacity 0.5s ease;
 }
 
@@ -164,18 +159,13 @@ h1 {
 @media (max-width:720px) {
     .wrapper {
         width:90%;
-        font-size:1em;
+        font-size: 1em;
         display: block;
         margin: auto;
     }
 
-    .navbar .icon {
-        width: 10%;
+    #nav-icon {
         display: block;
-    }
-
-    .navbar .icon:hover {
-        background-color: inherit;
     }
 
     .article-block {
