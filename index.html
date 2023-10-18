@@ -31,10 +31,10 @@
                     Contents
                 </p>
                 <ul style="font-size:2em;font-weight:normal;list-style:none;line-height:2em;
-                font-family:Inter,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif">                                                                                                               
-                    <li class="make-bold-0" style="font-weight:bold">Introduction</li>                                                                                                                                                                      
-                    <li class="make-bold-1">Lexing</li>                                                                                                                                                                      
-                </ul>                                                                                                                                                                                       
+                font-family:Inter,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif">
+                    <li class="make-bold-0" style="font-weight:bold">Introduction</li>
+                    <li class="make-bold-1">Lexing</li>
+                </ul>
             </div>
         </div>
         <div id="nav-icon" onclick="toggleContentBar()">
@@ -59,7 +59,7 @@
         </div>
         <div class="wrapper" id="content-0">
             <p>
-                Writing a compiler can be challenging and fun. It's fun if you simply take it up as an exercise to learn about lexing, 
+                Writing a compiler can be challenging and fun. It's fun if you simply take it up as an exercise to learn about lexing,
                 parsing and code generation. Not so fun if you try to implement an actual general purpose language in all it's glory.
             </p>
             <p>
@@ -67,7 +67,7 @@
             <a href="https://github.com/RohitRTdev/simc">https://github.com/RohitRTdev/simc</a>
             </p>
             <p>
-                To keep this process enjoyable, we will only be building a C compiler that supports a subset of the language features. 
+                To keep this process enjoyable, we will only be building a C compiler that supports a subset of the language features.
                 For more info on the exact features implemented, please visit the repo. With that in mind, let's get onto it.
             </p>
             <p>
@@ -82,38 +82,38 @@
                 To understand these 3 processes, let's first see what we are even trying to do. Whenever faced with a complex task, take a simple example first and see how the solution looks for that case alone, and then work on generalizing it.
                 <br><br>Let's consider the code:
             </p>
+<pre>
+    <span style="color:rebeccapurple;"><b>int </b></span>a = b + c * d++ - *m;
+</pre>
             <div class="code-block">
-                <span style="flex-grow:1;"><span style="color:rebeccapurple;">int </span>a = b + c * d++ - *m;</span>
-            </div> 
+            </div>
             <p>
-                How do we generate the code for this above statement. Before even answering this question, 
+                How do we generate the code for this above statement. Before even answering this question,
                 we need to first ask ourselves what architecture do we want to generate code for.
                 I have decided to use the famous x64 / AMD64 architecture since it is the most widely used one in consumer PC's and laptops.
             </p>
             <p>
                 Now that we've decided the arch, let's see how the assembly for the code snippet above looks like.
             </p>
-            <div class="code-block">
-                <p>
-                    //Anything that starts with '//' is a comment <br>                                      
-                    //x64 assembly in att syntax<br>                                                    
-                    //d++<br>
-                    movl -12(%rbp), %ebx //Load 'd'(assume it's stored at stack location rbp-12)<br> 
-                    addl 1, -12(%rbp) //Increment 'd'<br>
-                    //c * d++<br>
-                    movl -8(%rbp), %eax //Load 'c'<br>
-                    imull %ebx, %eax // Signed multiply c * d++, now res0 = c * d++<br>
-                    //*m<br>
-                    movq -24(%rbp), %rbx //Load 'm'(We're loading into rbx since pointer is 8 bytes)<br>
-                    movl (%rbx), %ebx //Dereference pointer 'm', so res1 = *m<br>
-                    //sub res1 from res0<br>
-                    subl %eax, %ebx // Now res2 = res0 - res1<br>
-                    //b + res2<br>
-                    addl (%rbp), %ebx // This gives us the final result<br>
-                    //a = final_result<br>
-                    movl %ebx, -28(%rbp) //Store final result at 'a'
-                </p>
-            </div>
+<pre>
+    <span  style="color: rgb(136, 136, 136);">//Anything that starts with '//' is a comment</span>
+    <span  style="color: rgb(136, 136, 136);">//x64 assembly in att syntax</span>
+    <span  style="color: rgb(136, 136, 136);">//d++</span>
+    movl -<span  style="color: rgb(136, 0, 0);">12</span>(<span  style="color: rgb(57, 115, 0);">%rbp</span>), <span  style="color: rgb(57, 115, 0);">%ebx</span> <span  style="color: rgb(136, 136, 136);">//Load 'd'(assume it's stored at stack location rbp-12)</span>
+    addl <span  style="color: rgb(136, 0, 0);">1</span>, -<span  style="color: rgb(136, 0, 0);">12</span>(<span  style="color: rgb(57, 115, 0);">%rbp</span>) <span  style="color: rgb(136, 136, 136);">//Increment 'd'</span>
+    <span  style="color: rgb(136, 136, 136);">//c * d++</span>
+    movl -<span  style="color: rgb(136, 0, 0);">8</span>(<span  style="color: rgb(57, 115, 0);">%rbp</span>), <span  style="color: rgb(57, 115, 0);">%eax</span> <span  style="color: rgb(136, 136, 136);">//Load 'c'</span>
+    imull <span  style="color: rgb(57, 115, 0);">%ebx</span>, <span  style="color: rgb(57, 115, 0);">%eax</span> <span  style="color: rgb(136, 136, 136);">// Signed multiply c * d++, now res0 = c * d++</span>
+    <span  style="color: rgb(136, 136, 136);">//*m</span>
+    movq -<span  style="color: rgb(136, 0, 0);">24</span>(<span  style="color: rgb(57, 115, 0);">%rbp</span>), <span  style="color: rgb(57, 115, 0);">%rbx</span> <span  style="color: rgb(136, 136, 136);">//Load 'm'(We're loading into rbx since pointer is 8 bytes)</span>
+    movl (<span  style="color: rgb(57, 115, 0);">%rbx</span>), <span  style="color: rgb(57, 115, 0);">%ebx</span> <span  style="color: rgb(136, 136, 136);">//Dereference pointer 'm', so res1 = *m</span>
+    <span  style="color: rgb(136, 136, 136);">//sub res1 from res0</span>
+    subl <span  style="color: rgb(57, 115, 0);">%eax</span>, <span  style="color: rgb(57, 115, 0);">%ebx</span> <span  style="color: rgb(136, 136, 136);">// Now res2 = res0 - res1</span>
+    <span  style="color: rgb(136, 136, 136);">//b + res2</span>
+    addl (<span  style="color: rgb(57, 115, 0);">%rbp</span>), <span  style="color: rgb(57, 115, 0);">%ebx</span> <span  style="color: rgb(136, 136, 136);">// This gives us the final result</span>
+    <span  style="color: rgb(136, 136, 136);">//a = final_result</span>
+    movl <span  style="color: rgb(57, 115, 0);">%ebx</span>, -<span  style="color: rgb(136, 0, 0);">28</span>(<span  style="color: rgb(57, 115, 0);">%rbp</span>) <span  style="color: rgb(136, 136, 136);">//Store final result at 'a'</span>
+</pre>
             <p>
                 Variables b, c and d are assumed to be of type int and m is assumed to be of type int* .
             </p>
@@ -126,8 +126,8 @@
                 Now that we've generated the code, let's see how to make our compiler do this. To perform this, what should we do first?
             </p>
             <p>
-                The compiler will only be given an input file, which contains a huge string. 
-                We need to make sense of this string, i.e convert it into symbols that the C language understands. 
+                The compiler will only be given an input file, which contains a huge string.
+                We need to make sense of this string, i.e convert it into symbols that the C language understands.
                 This is where step 1 comes in Lexing. In this step, we break the input set of characters into tokens that our compiler understands.
             </p>
             <p>
@@ -147,7 +147,7 @@
             <p style="margin:0;font-weight:bold;font-size:1.8em;">Will soon add some contact information here</p>
         </div>
     <script>
-        var existingOption = 0;    
+        var existingOption = 0;
 
         let scroll = document.getElementById("hor-scroll-bar");
         let body = document.querySelector("body");
@@ -158,14 +158,14 @@
         function setNavTab() {
             let prevTab = document.getElementById("prev-tab");
             let nextTab = document.getElementById("next-tab");
-            
+
             if(existingOption == 0) {
                 prevTab.style.display = "none";
             }
             else {
                 prevTab.style.display = "";
             }
-            
+
             if(existingOption == 1) {
                 nextTab.style.display = "none";
             }
@@ -173,7 +173,7 @@
                 nextTab.style.display = "";
             }
         }
-        
+
         function chooseOption(option) {
             if(option == existingOption)
                 return;
@@ -191,7 +191,7 @@
             newOpt.style.fontWeight = "bold";
             newOpt.style.color = "rgb(0, 119, 255)";
 
-            
+
             //Change the content
             opt = document.getElementById("content-"+existingOption);
             opt.style.display = "none";
@@ -201,7 +201,7 @@
             opt.style.display = "none";
             newOpt = document.getElementById("header-content-"+option);
             newOpt.style.display = "";
-            
+
             existingOption = option;
             window.scroll(0,0);
             setNavTab();
@@ -219,11 +219,11 @@
 
 
         var isContentDisplayed = false;
-        
+
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
-        
+
         async function toggleContentBar() {
             //Display the contents bar
             let anim = document.getElementById("content-navigation-anim");
@@ -247,13 +247,13 @@
 
             //Shift the menu icon
             let img = document.getElementById("logo-image");
-            
+
             if(isContentDisplayed) {
                 //Hide img first
-                menuIcon.style.right = "95%"; 
+                menuIcon.style.right = "95%";
                 img.style.visibility = "visible";
                 await sleep(500);
-                menuIcon.style.left = "0";   
+                menuIcon.style.left = "0";
                 menuIcon.style.display = "";
             }
             else {
@@ -262,7 +262,7 @@
                 img.style.visibility = "hidden";
                 menuIcon.style.display = "block";
             }
-            
+
             isContentDisplayed = !isContentDisplayed;
 
         }
