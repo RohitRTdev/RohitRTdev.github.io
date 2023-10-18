@@ -133,6 +133,25 @@
             <p>
                 After lexing, we should generate a list of tokens from our input string
             </p>
+<pre>
+    <span class="token-highlight">token1:</span> Type:<span class="type-highlight">keyword</span>, symbol:<span class="symbol-highlight">int</span>
+    <span class="token-highlight">token2:</span> Type:<span class="type-highlight">Identifier</span>, symbol:<span class="symbol-highlight">'a'</span>
+    <span class="token-highlight">token3:</span> Type:<span class="type-highlight">Operator</span>, symbol:<span class="symbol-highlight">'='</span>
+    <span class="token-highlight">token4:</span> Type:<span class="type-highlight">Identifier</span>, symbol:<span class="symbol-highlight">'b'</span>
+    <span class="token-highlight">token5:</span> Type:<span class="type-highlight">Operator</span>, symbol:<span class="symbol-highlight">'+'</span>
+    <span class="token-highlight">token6:</span> Type:<span class="type-highlight">Identifier</span>, symbol:<span class="symbol-highlight">'c'</span>
+    <span class="token-highlight">token7:</span> Type:<span class="type-highlight">Operator</span>, symbol:<span class="symbol-highlight">'*'</span>
+    <span class="token-highlight">token8:</span> Type:<span class="type-highlight">Identifier</span>, symbol:<span class="symbol-highlight">'d'</span>
+    <span class="token-highlight">token9:</span> Type:<span class="type-highlight">Operator</span>, symbol:<span class="symbol-highlight">'++'</span>
+    <span class="token-highlight">token10:</span> Type:<span class="type-highlight">Operator</span>, symbol:<span class="symbol-highlight">'-'</span>
+    <span class="token-highlight">token11:</span> Type:<span class="type-highlight">Operator</span>, symbol:<span class="symbol-highlight">'*</span>
+    <span class="token-highlight">token12:</span> Type:<span class="type-highlight">Identifier</span>, symbol:<span class="symbol-highlight">'m'</span>
+</pre>
+        <p>All of the lexer code is included in the lexer.cpp file under src/simcc. 
+            It simply iterates through the list of characters and tries to generate a <b>token object</b>. 
+            This object is defined in token.h header file under include/compiler folder.
+        </p>
+
         </div>
         <div class="navigator">
             <hr style="border-color:grey">

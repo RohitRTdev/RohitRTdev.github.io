@@ -27,6 +27,20 @@ pre {
     border-radius:10px;
 }
 
+.token-highlight {
+    color: rebeccapurple;
+}
+
+.symbol-highlight {
+    color: green;
+    font-weight: bold;
+}
+
+.type-highlight {
+    color: red;
+}
+
+
 .article-block {
     display:inline-block;
     margin: 3%;
