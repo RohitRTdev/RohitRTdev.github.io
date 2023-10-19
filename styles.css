@@ -19,14 +19,21 @@ h1 {
     font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-pre {
-    overflow-x: auto; 
-    padding: 0.5em; 
-    background: rgb(240, 240, 240); 
-    color: rgb(68, 68, 68);
-    border-radius:10px;
+pre code {
+    border-radius: 10px;
 }
 
+pre.manual-highlight{
+    border-radius: 10px;
+    overflow-x: auto; 
+    padding: 0.5em; 
+    background: rgb(240, 240, 240);
+    color: rgb(68, 68, 68);
+}
+
+.language-tag {
+    color: black;
+}
 .token-highlight {
     color: rebeccapurple;
 }

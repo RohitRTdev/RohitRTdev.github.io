@@ -11,6 +11,8 @@
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap">
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100&family=Roboto:wght@300&display=swap">
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100&family=Raleway:wght@300&family=Roboto:wght@300&display=swap">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css">
+        <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css"> -->
         <link rel="stylesheet" href="styles.css">
     </head>
 
@@ -22,6 +24,7 @@
 
         gtag('config', 'G-CBJWK8BNDP');
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <body>
         <div id="hor-scroll-bar" style="display:block;position:fixed;top:0;left:0;
         background-color:rgb(5, 241, 5);height:1vh;"></div>
@@ -34,6 +37,7 @@
                 font-family:Inter,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif">
                     <li class="make-bold-0" style="font-weight:bold">Introduction</li>
                     <li class="make-bold-1">Lexing</li>
+                    <li class="make-bold-2">Parsing</li>
                 </ul>
             </div>
         </div>
@@ -48,13 +52,14 @@
         <div style="height:3rem"></div>
         <h1 id="header-content-0">Writing a C compiler from scratch</h1>
         <h1 id="header-content-1" style="display:none">Writing C compiler - Part 1, Lexing</h1>
+        <h1 id="header-content-2" style="display:none">Writing C compiler - Part 2, Parsing</h1>
         <div class="article-block">
             <p><b>Contents</b></p>
             <ul>
                 <li class="make-bold-0" id="option-0" style="color:rgb(0, 119, 255);font-weight:bold;" onclick="chooseOption(0)">Introduction</li>
                 <li class="make-bold-1" id="option-1" onclick="chooseOption(1)">Lexing</li>
-                <!-- <li id="option-2" onclick="chooseOption(2)">Parsing</li>
-                <li id="option-3" onclick="chooseOption(3)">Evaluation</li> -->
+                <li class="make-bold-2" id="option-2" onclick="chooseOption(2)">Parsing</li>
+                <!-- <li id="option-3" onclick="chooseOption(3)">Evaluation</li> -->
             </ul>
         </div>
         <div class="wrapper" id="content-0">
@@ -82,7 +87,7 @@
                 To understand these 3 processes, let's first see what we are even trying to do. Whenever faced with a complex task, take a simple example first and see how the solution looks for that case alone, and then work on generalizing it.
                 <br><br>Let's consider the code:
             </p>
-<pre>
+<pre class="manual-highlight">
     <span style="color:rebeccapurple;"><b>int </b></span>a = b + c * d++ - *m;
 </pre>
             <div class="code-block">
@@ -95,9 +100,8 @@
             <p>
                 Now that we've decided the arch, let's see how the assembly for the code snippet above looks like.
             </p>
-<pre>
-    <span  style="color: rgb(136, 136, 136);">//Anything that starts with '//' is a comment</span>
-    <span  style="color: rgb(136, 136, 136);">//x64 assembly in att syntax</span>
+<pre class="manual-highlight">
+x64 asm att syntax
     <span  style="color: rgb(136, 136, 136);">//d++</span>
     movl -<span  style="color: rgb(136, 0, 0);">12</span>(<span  style="color: rgb(57, 115, 0);">%rbp</span>), <span  style="color: rgb(57, 115, 0);">%ebx</span> <span  style="color: rgb(136, 136, 136);">//Load 'd'(assume it's stored at stack location rbp-12)</span>
     addl <span  style="color: rgb(136, 0, 0);">1</span>, -<span  style="color: rgb(136, 0, 0);">12</span>(<span  style="color: rgb(57, 115, 0);">%rbp</span>) <span  style="color: rgb(136, 136, 136);">//Increment 'd'</span>
@@ -133,7 +137,7 @@
             <p>
                 After lexing, we should generate a list of tokens from our input string
             </p>
-<pre>
+<pre class="manual-highlight">
     <span class="token-highlight">token1:</span> Type:<span class="type-highlight">keyword</span>, symbol:<span class="symbol-highlight">int</span>
     <span class="token-highlight">token2:</span> Type:<span class="type-highlight">Identifier</span>, symbol:<span class="symbol-highlight">'a'</span>
     <span class="token-highlight">token3:</span> Type:<span class="type-highlight">Operator</span>, symbol:<span class="symbol-highlight">'='</span>
@@ -147,11 +151,140 @@
     <span class="token-highlight">token11:</span> Type:<span class="type-highlight">Operator</span>, symbol:<span class="symbol-highlight">'*</span>
     <span class="token-highlight">token12:</span> Type:<span class="type-highlight">Identifier</span>, symbol:<span class="symbol-highlight">'m'</span>
 </pre>
-        <p>All of the lexer code is included in the lexer.cpp file under src/simcc. 
+        <p>
+            All of the lexer code is included in the lexer.cpp file under src/simcc. 
             It simply iterates through the list of characters and tries to generate a <b>token object</b>. 
             This object is defined in token.h header file under include/compiler folder.
         </p>
 
+        <p>
+            The logic to generate this is implemented using a simple lookahead parser. This means that
+            we need to atmost look one extra token to the right, before we can decide what the token is.
+            The lexer and the parser are implemented as state machines. Each state tells the lexer how to process
+            the current token and about how to reduce it (That is figure out what this token is).
+        </p>
+
+<pre><code class="language-cpp"><span class="language-tag">C++</span>
+    if(state == LEXER_START) {
+        sim_log_debug("In state LEXER_START. Searching for operator token.");
+        switch(ch) {
+            case ';': op = SEMICOLON; break;
+            case '{': op = CLB; break;
+            case '}': op = CRB; break;
+            case '~': op = BIT_NOT; break;
+            case '*': op = MUL; break;
+            case '/': op = DIV; break;
+            case '%': op = MODULO; break;
+            case '^': op = BIT_XOR; break;
+            case '(': op = LB; break;
+            case ')': op = RB; break;
+            case '[': op = LSB; break;
+            case ']': op = RSB; break;
+            case ',': op = COMMA; break;
+            case '!': {
+                state = EXTENDED_OPERATOR_TOKEN;
+                prev_op = NOT;
+                break;
+            } 
+            case '+': {
+                state = EXTENDED_OPERATOR_TOKEN;
+                prev_op = PLUS;
+                break;
+            }
+            case '-': {
+                state = EXTENDED_OPERATOR_TOKEN;
+                prev_op = MINUS;
+                break;
+            }
+            case '&': {
+                state = EXTENDED_OPERATOR_TOKEN;
+                prev_op = AMPER;
+                break;
+            }
+            case '|': {
+                state = EXTENDED_OPERATOR_TOKEN;
+                prev_op = BIT_OR;
+                break;
+            }
+            case '<': {
+                state = EXTENDED_OPERATOR_TOKEN;
+                prev_op = LT;
+                break;
+            }
+            case '>': {
+                state = EXTENDED_OPERATOR_TOKEN;
+                prev_op = GT;
+                break;
+            }
+            case '=': {
+                state = EXTENDED_OPERATOR_TOKEN;
+                prev_op = EQUAL;
+                break;
+            }
+            default: {
+                state = LOOKAHEAD_FOR_CONSTANT;
+            }
+        }
+    }
+</code></pre>
+        <p>
+            The lexer starts at state <b>LEXER_START</b>. It checks if the given character(<I>ch</I>) 
+            is an operator. Most of the operators can be determined using just one character such as <b>'*'</b>
+            or <b>'~'</b>. However, certain operators need further processing. This is why for certain other operators 
+            we go to <b>EXTENDED_OPERATOR_TOKEN</b> state. This state terminates and goes back to <b>LEXER_START</b> 
+            once it has determined the operator it is looking for by fetching the next character.
+        </p>
+        <p>
+            An example of such a character is <b>'++'</b>. When lexer fetches the first plus, it cannot immediately reduce that token, and can only do so 
+            once it has determined the next character (If the next character is a '+', then it gets interpreted as '++' otherwise just a single '+').
+        </p>
+
+        <p>Once a particular token is determined, a <b>token</b> object is generated. The token object is declared as follows.</p>
+<pre><code class="language-cpp"><span class="language-tag">C++</span>
+    struct token {
+        private:
+            token_type type;
+            token_sub_type sub_type;
+            size_t position;
+            bool is_keyword_data_type() const;
+
+        public:
+            std::variant<char, std::string, operator_type, keyword_type> value;
+
+            template<typename T>
+            token(token_type _type, const T& val) : type(_type) {
+                value = val;
+                position = global_token_pos - 1;
+            }
+        
+            token(token_type _type, token_sub_type _sub_type, const std::string& num) {
+                type = CONSTANT;
+                sub_type = _sub_type;
+                value = num;
+                position = global_token_pos - 1;
+            }
+        
+            token(token_type _type, const char& val) {
+                type = CONSTANT;
+                sub_type = TOK_CHAR;
+                value = val;
+                position = global_token_pos - 1;
+            }
+    }
+</code></pre>
+        <p>
+            This token class has been simplified and not all fields displayed in this are integral 
+            to the conceptual understanding of the lexer. It is pretty self explanatory and stores information on
+            what type of token it is (KEYWORD, OPERATOR, LITERAL etc) along with the value of that token. For example, 
+            if it is a string literal, then what is that literal.
+        </p>
+        <p>
+            Once all characters within the file are processed, the final token stream is passed on to the 
+            parser stage.
+        </p>
+        </div>
+        <div class="wrapper" id="content-2">
+            Content to soon show up...
         </div>
         <div class="navigator">
             <hr style="border-color:grey">
@@ -166,6 +299,8 @@
             <p style="margin:0;font-weight:bold;font-size:1.8em;">Will soon add some contact information here</p>
         </div>
     <script>
+        hljs.highlightAll();
+        document.querySelector(".language-tag").style.color = "black";
         var existingOption = 0;
 
         let scroll = document.getElementById("hor-scroll-bar");
@@ -185,13 +320,15 @@
                 prevTab.style.display = "";
             }
 
-            if(existingOption == 1) {
+            if(existingOption == 2) {
                 nextTab.style.display = "none";
             }
             else {
                 nextTab.style.display = "";
             }
         }
+
+        //chooseOption(1);
 
         function chooseOption(option) {
             if(option == existingOption)
