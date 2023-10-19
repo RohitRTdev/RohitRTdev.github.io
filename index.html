@@ -38,6 +38,7 @@
                     <li class="make-bold-0" style="font-weight:bold">Introduction</li>
                     <li class="make-bold-1">Lexing</li>
                     <li class="make-bold-2">Parsing</li>
+                    <li class="make-bold-3">Evaluation</li>
                 </ul>
             </div>
         </div>
@@ -53,13 +54,14 @@
         <h1 id="header-content-0">Writing a C compiler from scratch</h1>
         <h1 id="header-content-1" style="display:none">Writing C compiler - Part 1, Lexing</h1>
         <h1 id="header-content-2" style="display:none">Writing C compiler - Part 2, Parsing</h1>
+        <h1 id="header-content-3" style="display:none">Writing C compiler - Part 3, Evaluation</h1>
         <div class="article-block">
             <p><b>Contents</b></p>
             <ul>
                 <li class="make-bold-0" id="option-0" style="color:rgb(0, 119, 255);font-weight:bold;" onclick="chooseOption(0)">Introduction</li>
                 <li class="make-bold-1" id="option-1" onclick="chooseOption(1)">Lexing</li>
                 <li class="make-bold-2" id="option-2" onclick="chooseOption(2)">Parsing</li>
-                <!-- <li id="option-3" onclick="chooseOption(3)">Evaluation</li> -->
+                <li class="make-bold-2" id="option-3" onclick="chooseOption(3)">Evaluation</li>
             </ul>
         </div>
         <div class="wrapper" id="content-0">
@@ -283,7 +285,10 @@ x64 asm att syntax
             parser stage.
         </p>
         </div>
-        <div class="wrapper" id="content-2">
+        <div class="wrapper" id="content-2" style="display:none">
+            Content to soon show up...
+        </div>
+        <div class="wrapper" id="content-3" style="display:none">
             Content to soon show up...
         </div>
         <div class="navigator">
@@ -320,15 +325,13 @@ x64 asm att syntax
                 prevTab.style.display = "";
             }
 
-            if(existingOption == 2) {
+            if(existingOption == 3) {
                 nextTab.style.display = "none";
             }
             else {
                 nextTab.style.display = "";
             }
         }
-
-        //chooseOption(1);
 
         function chooseOption(option) {
             if(option == existingOption)
