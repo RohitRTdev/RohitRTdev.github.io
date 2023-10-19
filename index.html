@@ -310,10 +310,29 @@ x64 asm att syntax
 
         let scroll = document.getElementById("hor-scroll-bar");
         let body = document.querySelector("body");
+        let contact = document.querySelector(".contact-info");
         body.onscroll = (event) => {
             scroll.style.width = 100 * (window.scrollY / (body.scrollHeight - window.innerHeight)) + "%";
         };
 
+        window.onresize = calcContactPositioning;
+
+        function calcContactPositioning() {
+            let netHeight = body.offsetHeight;
+            let totalHeight = window.innerHeight;
+
+            if(totalHeight >= netHeight) {
+                contact.style.position = "absolute";
+                contact.style.bottom = "0";
+                contact.style.left = "0"; 
+            }
+            else {
+                contact.style.position = "static";
+            }
+        }
+
+        calcContactPositioning();
+        
         function setNavTab() {
             let prevTab = document.getElementById("prev-tab");
             let nextTab = document.getElementById("next-tab");
@@ -364,6 +383,7 @@ x64 asm att syntax
             existingOption = option;
             window.scroll(0,0);
             setNavTab();
+            calcContactPositioning();
         }
 
         function chooseNextOption() {
