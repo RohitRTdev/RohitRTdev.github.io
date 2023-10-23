@@ -6,13 +6,14 @@
         </title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" type="image/x-icon" href="assets/logo.ico">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap">
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100&family=Roboto:wght@300&display=swap">
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100&family=Raleway:wght@300&family=Roboto:wght@300&display=swap">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css">
-        <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css"> -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
         <link rel="stylesheet" href="styles.css">
     </head>
 
@@ -47,8 +48,8 @@
             <div class="bar bar2"></div>
             <div class="bar bar3"></div>
         </div>
-        <div class="image-block" id="logo-image" style="width:100%;text-align:center">
-            <img src="assets/logo.png">
+        <div id="logo-image" style="width:100%;text-align: center;">
+            <img class="logo-image" src="assets/logo.png" alt="rtdev logo">
         </div>
         <div style="height:3rem"></div>
         <h1 id="header-content-0">Writing a C compiler from scratch</h1>
@@ -286,7 +287,52 @@ x64 asm att syntax
         </p>
         </div>
         <div class="wrapper" id="content-2" style="display:none">
-            Content to soon show up...
+            <p>
+            Parsing involves taking the input stream we had earlier and producing an <b>abstract syntax tree</b>(ast).
+            The ast is a simple tree structure that tells the compiler in what order we must perform the operations listed.
+            </p>
+            <p>
+                Below picture shows the ast of the previous expression that our compiler generates.
+            </p>
+            <div class="img-class">
+                <img src="assets/ast.png" alt="AST of the previous C expression">
+            </div>
+            <p>
+               A <I>declaration list</I> contains multiple comma separated declarations. A declaration contains a 
+               <I>declarator</I>. A declarator could contain an identifier (it's optional since abstract declarators doesn't contain identifier). 
+               Declarator's could also contain modifiers (such as pointer or array declarator). Our case is a very simple declarator that contains 
+               only an identifier (In C parlance, this is called an unmodified type).  
+            </p>
+            <p>
+                The definition that I gave above could also be condensed into a notation as follows.
+            </p>
+<pre class="manual-highlight">
+Taken from msdn website    
+    <b>declarator:</b>
+        pointeropt direct-declarator
+
+    <b>direct-declarator:</b>
+        identifier
+        ( declarator )
+        direct-declarator [ constant-expressionopt ]
+        direct-declarator ( parameter-type-list )
+        direct-declarator ( identifier-listopt )
+
+    <b>pointer:</b>
+        * type-qualifier-listopt
+        * type-qualifier-listopt pointer
+
+    <b>type-qualifier-list:</b>
+        type-qualifier
+        type-qualifier-list type-qualifier
+</pre>
+        <p>
+            The above definition is what is known as grammar. Although this is only showing the grammar (structure) 
+            of how declarations in C are laid out. Using this notation, we can describe all kinds of constructs within 
+            that language. It consists of two tokens, <b>terminal</b> and <b>non-terminal</b>. Terminal tokens are those 
+            which cannot be split further into simpler tokens. For example, <b>type-qualifier</b> (static, extern, auto, register) is a terminal token whereas 
+            <b>declarator</b> is a non terminal token.
+        </p>
         </div>
         <div class="wrapper" id="content-3" style="display:none">
             Content to soon show up...
@@ -298,12 +344,33 @@ x64 asm att syntax
                 <span onclick="chooseNextOption()" id="next-tab">Next</span>
             </div>
         </div>
-        <div class="contact-info"; style="display:flex;background-color:grey;color:lightgray;
+        <div class="contact-info"; style="display:flex;flex-direction:column;background-color:grey;color:lightgray;
             width:100%;min-height:10rem;text-align:center; justify-content: center;align-items:center;
-            font-family:Raleway,'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif">
-            <p style="margin:0;font-weight:bold;font-size:1.8em;">Will soon add some contact information here</p>
+            font-family:Raleway,'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+            flex-wrap:wrap;flex-grow:1">
+            <p style="margin-bottom:0;flex-grow:1;font-weight:bold;font-size:1.8em;">
+                Rohit Jacob George
+            </p>
+            <p style="flex-grow:1;font-size:1.1em">In case of queries or mistakes you may find, please reach out 
+            to me via my email - <u>rohit20011002@gmail.com</u></p>
+            <div class="row-break"></div>
+            <div class="icons">
+                <a target="_blank" href="https://www.linkedin.com/in/rohit-jacob-george-3190361b3" class="social-media-icon">
+                    <i class="fa fa-linkedin"></i>
+                </a>
+                <a target="_blank" href="https://github.com/RohitRTdev" class="social-media-icon">
+                    <i class="fa fa-github"></i>
+                </a>
+            </div>
+            <p style="font-size:0.9em">
+                &#169 2023 Rohit Jacob George. All Rights Reserved.
+            </p>
         </div>
     <script>
+        if (!("ontouchstart" in document.documentElement)) {
+            document.documentElement.className += " no-touch";
+        }
+
         hljs.highlightAll();
         document.querySelector(".language-tag").style.color = "black";
         var existingOption = 0;
@@ -352,6 +419,7 @@ x64 asm att syntax
             }
         }
 
+        chooseOption(2);
         function chooseOption(option) {
             if(option == existingOption)
                 return;
