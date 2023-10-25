@@ -19,6 +19,10 @@ h1 {
     font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+.wrapper li {
+    font-size: 1em;
+}
+
 pre code {
     border-radius: 10px;
 }

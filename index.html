@@ -125,7 +125,8 @@ x64 asm att syntax
                 Variables b, c and d are assumed to be of type int and m is assumed to be of type int* .
             </p>
             <p>
-                Notice a few things here. First the variable's location. In C, variables are mostly stored in the stack, and it grows downwards in x64 arch. This is not the case always tho(variables could also be located in static memory or heap). Also notice the offsets at which the variables are stored. They are allocated in such a way that all the variables are aligned on their natural boundary( int variables are aligned on 4 byte boundaries and pointers are aligned on 8 byte boundaries).
+                Notice a few things here. First the variable's location. In C, variables are mostly stored in the stack, and it grows downwards in x64 arch. 
+                This is not the case always though (variables could also be located in static memory or heap). Also notice the offsets at which the variables are stored. They are allocated in such a way that all the variables are aligned on their natural boundary( int variables are aligned on 4 byte boundaries and pointers are aligned on 8 byte boundaries).
             </p>
         </div>
         <div class="wrapper" id="content-1" style="display:none">
@@ -135,7 +136,7 @@ x64 asm att syntax
             <p>
                 The compiler will only be given an input file, which contains a huge string.
                 We need to make sense of this string, i.e convert it into symbols that the C language understands.
-                This is where step 1 comes in Lexing. In this step, we break the input set of characters into tokens that our compiler understands.
+                This is where step 1 comes in, Lexing. In this step, we break the input set of characters into tokens that our compiler understands.
             </p>
             <p>
                 After lexing, we should generate a list of tokens from our input string
@@ -333,6 +334,105 @@ Taken from msdn website
             which cannot be split further into simpler tokens. For example, <b>type-qualifier</b> (static, extern, auto, register) is a terminal token whereas 
             <b>declarator</b> is a non terminal token.
         </p>
+        <p>
+            Let's take a look at a simple state machine that parses this table
+        </p>
+        <div class="img-class">
+            <img src="assets/state-machine.png" alt="State machine for parsing simple C expression">
+        </div>
+        <p>
+            We start out by fetching tokens one by one from our token stream. Our start state in this case will be set to <em>EXPECT_UNARY_OP</em>.  
+            For each token, our parser checks if the token happens to be what the state mentions. If it is that token, then we go to the <b>yes</b> state. 
+            If it's any other token we proceed to the <b>no</b> state. This means that if the first token is a unary operator, then we proceed to state 
+            <em>EXPECT_UNARY_OP</em>, otherwise we proceed to state <em>EXPECT_IDENT</em>.
+        </p>
+        <p>
+            Within our parser, we define states like so
+        </p>
+<pre><code class="language-cpp"><span class="language-tag">C++</span>
+static void parse_expr() {
+
+    //At start of expression
+    parser.define_shift_state("EXPECT_EXPR_UOP", EXPECT_EXPR_UOP, &token::is_unary_operator, EXPECT_EXPR_VAR, create_ast_unary_op);
+    parser.define_shift_state("EXPECT_EXPR_VAR", EXPECT_EXPR_POP, &token::is_identifier, EXPECT_EXPR_CON, create_ast_expr_var);
+    parser.define_shift_state("EXPECT_EXPR_CON", EXPECT_EXPR_POP, &token::is_constant, EXPECT_EXPR_LB, create_ast_expr_con);
+    parser.define_shift_state("EXPECT_EXPR_LB", EXPECT_EXPR_UOP_S, &token::is_operator_lb, EXPECT_EXPR_RB, create_ast_punctuator, nullptr, LB_EXPR_REDUCE);
+    
+    //After an expression
+    parser.define_state("EXPECT_EXPR_POP", EXPECT_EXPR_POP, &token::is_postfix_operator, EXPECT_EXPR_BOP, false, reduce_expr_postfix);
+    parser.define_state("EXPECT_EXPR_BOP", EXPECT_EXPR_UOP_S, &token::is_binary_operator, EXPECT_EXPR_FN_LB, false, reduce_expr_bop);
+    parser.define_shift_state("EXPECT_EXPR_FN_LB", EXPECT_EXPR_UOP_S, &token::is_operator_lb, EXPECT_EXPR_LSB, create_ast_punctuator, nullptr, FN_CALL_EXPR_REDUCE);
+    parser.define_shift_state("EXPECT_EXPR_LSB", EXPECT_EXPR_UOP_S, &token::is_operator_lsb, EXPECT_EXPR_RB, create_ast_punctuator, nullptr, ARRAY_SUBSCRIPT_REDUCE);
+
+    //Terminal components in an expression
+    parser.define_special_state("EXPECT_EXPR_RB", &token::is_operator_rb, reduce_expr_rb, EXPECT_EXPR_RSB); 
+    parser.define_special_state("EXPECT_EXPR_RSB", &token::is_operator_rsb, reduce_expr_rsb, EXPECT_EXPR_SC);
+    parser.define_special_state("EXPECT_EXPR_SC", &token::is_operator_sc, reduce_expr_stmt, PARSER_ERROR,  
+    "Expected expression to terminate with ')' or ',' or ';'");
+
+    //States that start an expression but appear after an existing expression
+    parser.define_shift_state("EXPECT_EXPR_UOP_S", EXPECT_EXPR_UOP_S, &token::is_unary_operator, EXPECT_EXPR_VAR_S, create_ast_unary_op);
+    parser.define_shift_state("EXPECT_EXPR_VAR_S", EXPECT_EXPR_POP, &token::is_identifier, EXPECT_EXPR_CON_S, create_ast_expr_var);
+    parser.define_shift_state("EXPECT_EXPR_CON_S", EXPECT_EXPR_POP, &token::is_constant, EXPECT_EXPR_LB_S, create_ast_expr_con);
+    parser.define_shift_state("EXPECT_EXPR_LB_S", EXPECT_EXPR_UOP_S, &token::is_operator_lb, EXPECT_EXPR_FN_RB_S, create_ast_punctuator, nullptr, LB_EXPR_REDUCE);
+    parser.define_state("EXPECT_EXPR_FN_RB_S", EXPECT_EXPR_POP, &token::is_operator_rb, PARSER_ERROR, false, reduce_expr_empty_fn, 
+    "Expected unary op, var, constant, '(' for start of expression");
+}
+</code></pre>
+        <p>
+            The define_*_state functions will internally create a state object and will include it to the state machine. When the state machine is started it goes through 
+            each of these states. The code shown above implements the state machine for a complete C expression, so you may see states that we didn't show in the picture. 
+            Now let's discuss about how the parser actually generates the ast. 
+        </p>
+        <p>
+            The state machine includes a stack object which we call the <em>parser stack</em>. When we hit the <b>yes</b> condition in a state, it does one of three things. 
+            <ul>
+                <li>Shift -> Push the token into stack</li>
+                <li>Reduce -> Call a reduce function, which will combine the tokens in the stack</li>
+                <li>Pass -> This will do neither of the above, and simply proceed to the next state</li>
+            </ul>
+            This is why we have many different types of define_functions declared in our code. Each one will tell how our state must react to a <b>yes</b> condition. 
+            The <em>reduce</em> function is different for different states. If the state hits the <b>no</b> condition, then it simply proceeds to the <b>no</b> state. 
+        </p>
+        <p>
+            When we walk through the states, we follow these additional rules. <br>
+            <I>Note: This is only valid for expression parsing.</I>
+            <ul>
+                <li>If we hit <b>yes</b> condition for <em>EXPECT_BINARY_OP</em>, we invoke binary_op_reduction</li>
+                <li>If we hit <b>yes</b> condition for <em>EXPECT_POSTFIX_OP</em>, we invoke postfix_op_reduction</li>
+                <li>If we hit <em>REDUCE_EXPRESSION</em> state, we invoke expr_reduction</li>
+            </ul>
+            For each of these reductions, we fetch a token from the top of the <em>parser stack</em> and perform an operation depending on the reduction type and 
+            the type of the token we're dealing with. From here on we'll refer to the token we fetched from the token stream as <b>cur_token</b> and the token we fetched 
+            from the <em>parser stack</em> as <b>parser_token</b>.
+<pre class="manual-highlight">
+    <b>binary_op_reduction:</b>
+        Rule 1) If <b>parser_token</b> is not an operator, we don't do anything and simply fetch the next <b>parser_token</b>.
+        Rule 2) If <b>parser_token</b> is an operator, and it has lower priority than <b>cur_token</b>, then we stop our reduction, shift the <b>cur_token</b> and continue with the next state.
+        Rule 3) If <b>parser_token</b> is an operator, and it has higher priority than <b>cur_token</b>, then we invoke the combination rule for that operator according to rule 7-8, and then continue with the next <b>parser_token</b>.
+        Rule 4) If <b>parser_token</b> is an operator, and it has the same priority as <b>cur_token</b>, then we invoke rule 5 or rule 6.
+        Rule 5) If <b>parser_token</b> has LHS associativity, we combine the operator according to rule 7-8, and then continue with the next <b>parser_token</b>.
+        Rule 6) If <b>parser_token</b> has RHS associativity, then we stop our reduction, shift the <b>cur_token</b> and continue with the next state.
+        Rule 7) If we find a binary operator, then we create an ast node with the root of the node being the operator and left and right nodes of it being the nodes below and above it in the <em>parser stack</em> respectively. Push the newly created ast onto the stack.
+        Rule 8) If we find a unary operator, then we create an ast node with the root of the node being the operator and it's child node being the node above it in the <em>parser stack</em>. Push the newly created ast onto the stack.
+        Rule 9) If we hit the end of the stack, we stop reduction, shift the <b>cur_token</b> and continue with the next state.
+    
+    <b>postfix_op_reduction:</b>
+        Create an ast node with the root being the postfix operator, and it's child being the top node on the <em>parser stack</em>.
+        Then push the ast onto the <em>parser stack</em>.
+
+    <b>expr_reduction:</b>
+        For each <b>parser_token</b> in <em>parser stack</em>:
+            if <b>parser_token</b> is binary_operator:
+                Reduce according to rule 7
+            if <b>parser_token</b> is unary_operator:
+                Reduce according to rule 8
+</pre>
+        <p>
+            When done with <em>expr_reduction</em>, we should only be left with one node in the <em>parser stack</em>. This node should represent the ast for our expression. All 
+            the code for the parser can be found under parser.cpp and the state-machine logic is implemented in state-machine.cpp.
+        </p>
+        </p>
         </div>
         <div class="wrapper" id="content-3" style="display:none">
             Content to soon show up...
@@ -419,7 +519,7 @@ Taken from msdn website
             }
         }
 
-        chooseOption(2);
+        //chooseOption(2);
         function chooseOption(option) {
             if(option == existingOption)
                 return;
