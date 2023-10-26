@@ -334,6 +334,35 @@ Taken from msdn website
             which cannot be split further into simpler tokens. For example, <b>type-qualifier</b> (static, extern, auto, register) is a terminal token whereas 
             <b>declarator</b> is a non terminal token.
         </p>
+        <h2>Parser design</h2>
+        <p>
+            You don't have to write a parser from scratch necessarily. There are tools such as <I>bison</I>, which will 
+            generate files written in C that implements a state machine which will parse your grammar. You simply need 
+            to give it the rules for your grammar, and it will generate the files for you.
+        </p>
+        <p>
+            However, simc uses it's own parser written from scratch. It is simply a state machine. State machines are 
+            abstract structures that allow us to visualize the flow of the <I>state</I> of a machine given a set of inputs.
+            Each state is described by what kind of input it takes, and which state it proceeds to after getting that input.
+            Let us take a look at a state machine for parsing a C expression. For the sake of this tutorial, we'll proceed a simplified 
+            form of the C expression. The grammar for it is as follows.
+        </p>
+<pre class="manual-highlight">
+<span style="color:darkblue;font-weight: bold;">Simplified expression grammar for C</span>
+    <b>&ltexpr&gt</b> ::= <b>&ltexpr&gt</b> binary_operator <b>&ltexpr&gt</b>
+    <b>&ltexpr&gt</b> ::= <b>&ltexpr&gt</b> postfix_operator
+    <b>&ltexpr&gt</b> ::= unary_operator <b>&ltexpr&gt</b>
+    <b>&ltexpr&gt</b> ::= identifier 
+    <b>&ltexpr&gt</b> ::= constant 
+</pre>
+        <p>
+            Let's try parsing expressions with the above grammar. Our parser uses states which has only 2 pathways.
+            Yes/No. Each state has a <b>yes</b> token. If the state machine finds that the current token is equal to the 
+            <b>yes</b> token, then we proceed to a given state, otherwise we proceed to the next state. <I>The point to be noted 
+            here is that, we could have designed a state machine where a given state could have proceeded into more that 2 states 
+            but we chose to restrict it to just 2 states</I>. The reason for this design will be clear in a second. 
+        </p>
+        
         <p>
             Let's take a look at a simple state machine that parses this table
         </p>
@@ -468,7 +497,7 @@ static void parse_expr() {
         </div>
     <script>
         if (!("ontouchstart" in document.documentElement)) {
-            document.documentElement.className += " no-touch";
+            document.documentElement.classList.add("no-touch");
         }
 
         hljs.highlightAll();
