@@ -156,9 +156,9 @@ x64 asm att syntax
     <span class="token-highlight">token12:</span> Type:<span class="type-highlight">Identifier</span>, symbol:<span class="symbol-highlight">'m'</span>
 </pre>
         <p>
-            All of the lexer code is included in the lexer.cpp file under src/simcc. 
+            All of the lexer code is included in the <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/src/simcc/lexer.cpp">lexer.cpp</a> file under src/simcc. 
             It simply iterates through the list of characters and tries to generate a <b>token object</b>. 
-            This object is defined in token.h header file under include/compiler folder.
+            This object is defined in <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/include/compiler/token.h">token.h</a> header file under include/compiler folder.
         </p>
 
         <p>
@@ -334,6 +334,7 @@ Taken from msdn website
             which cannot be split further into simpler tokens. For example, <b>type-qualifier</b> (static, extern, auto, register) is a terminal token whereas 
             <b>declarator</b> is a non terminal token.
         </p>
+        <br>
         <h2>Parser design</h2>
         <p>
             You don't have to write a parser from scratch necessarily. There are tools such as <I>bison</I>, which will 
@@ -344,11 +345,11 @@ Taken from msdn website
             However, simc uses it's own parser written from scratch. It is simply a state machine. State machines are 
             abstract structures that allow us to visualize the flow of the <I>state</I> of a machine given a set of inputs.
             Each state is described by what kind of input it takes, and which state it proceeds to after getting that input.
-            Let us take a look at a state machine for parsing a C expression. For the sake of this tutorial, we'll proceed a simplified 
-            form of the C expression. The grammar for it is as follows.
+            For the sake of this tutorial, we'll proceed with a simplified form of the C expression. 
+            The grammar for it is as follows.
         </p>
 <pre class="manual-highlight">
-<span style="color:darkblue;font-weight: bold;">Simplified expression grammar for C</span>
+<span style="color:darkblue;font-weight: bold;">Simplified expression grammar for C (BNF notation)</span>
     <b>&ltexpr&gt</b> ::= <b>&ltexpr&gt</b> binary_operator <b>&ltexpr&gt</b>
     <b>&ltexpr&gt</b> ::= <b>&ltexpr&gt</b> postfix_operator
     <b>&ltexpr&gt</b> ::= unary_operator <b>&ltexpr&gt</b>
@@ -409,7 +410,7 @@ static void parse_expr() {
 }
 </code></pre>
         <p>
-            The define_*_state functions will internally create a state object and will include it to the state machine. When the state machine is started it goes through 
+            The define_*_state functions will internally create a state object and will include it to the state machine. When the state machine is started, it goes through 
             each of these states. The code shown above implements the state machine for a complete C expression, so you may see states that we didn't show in the picture. 
             Now let's discuss about how the parser actually generates the ast. 
         </p>
@@ -430,6 +431,7 @@ static void parse_expr() {
                 <li>If we hit <b>yes</b> condition for <em>EXPECT_BINARY_OP</em>, we invoke binary_op_reduction</li>
                 <li>If we hit <b>yes</b> condition for <em>EXPECT_POSTFIX_OP</em>, we invoke postfix_op_reduction</li>
                 <li>If we hit <em>REDUCE_EXPRESSION</em> state, we invoke expr_reduction</li>
+                <li>If we hit <em>EXPECT_UNARY_OP</em>, <em>EXPECT_IDENT</em> or <em>EXPECT_CONSTANT</em> state, we simply shift the token.
             </ul>
             For each of these reductions, we fetch a token from the top of the <em>parser stack</em> and perform an operation depending on the reduction type and 
             the type of the token we're dealing with. From here on we'll refer to the token we fetched from the token stream as <b>cur_token</b> and the token we fetched 
@@ -459,7 +461,8 @@ static void parse_expr() {
 </pre>
         <p>
             When done with <em>expr_reduction</em>, we should only be left with one node in the <em>parser stack</em>. This node should represent the ast for our expression. All 
-            the code for the parser can be found under parser.cpp and the state-machine logic is implemented in state-machine.cpp.
+            the code for the parser can be found under <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/src/simcc/parser.cpp">parser.cpp</a> and the state-machine logic is implemented in 
+            <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/src/simcc/state-machine.cpp">state-machine.cpp</a>.
         </p>
         </p>
         </div>
@@ -482,6 +485,7 @@ static void parse_expr() {
             </p>
             <p style="flex-grow:1;font-size:1.1em">In case of queries or mistakes you may find, please reach out 
             to me via my email - <u>rohit20011002@gmail.com</u></p>
+            <p>Special thanks to P Pavithra for help with the design</p>
             <div class="row-break"></div>
             <div class="icons">
                 <a target="_blank" href="https://www.linkedin.com/in/rohit-jacob-george-3190361b3" class="social-media-icon">
@@ -548,7 +552,7 @@ static void parse_expr() {
             }
         }
 
-        //chooseOption(2);
+        chooseOption(2);
         function chooseOption(option) {
             if(option == existingOption)
                 return;
