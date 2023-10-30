@@ -461,13 +461,314 @@ static void parse_expr() {
 </pre>
         <p>
             When done with <em>expr_reduction</em>, we should only be left with one node in the <em>parser stack</em>. This node should represent the ast for our expression. All 
-            the code for the parser can be found under <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/src/simcc/parser.cpp">parser.cpp</a> and the state-machine logic is implemented in 
-            <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/src/simcc/state-machine.cpp">state-machine.cpp</a>.
-        </p>
+            the code for the parser can be found under parser.cpp and the state-machine logic is implemented in state-machine.cpp.
         </p>
         </div>
         <div class="wrapper" id="content-3" style="display:none">
-            Content to soon show up...
+            <p>
+                For keeping the discussion brief and simple, let us consider how <em>simc</em> handles an expression node. The expression handler is written as a separate class. It's defined 
+                in <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/src/simcc/evaluator.cpp">evaluator.cpp</a> file. Let's take a look at a couple of methods from this class which 
+                implements the backbone.
+            </p>
+<pre><code class="language-cpp"><span class="language-tag">C++</span>
+void eval_expr::handle_node() {
+    expr = cast_to_ast_expr(expr_node);
+    if(expr->is_var()) {
+        handle_var();
+    }
+    else if(expr->is_con()) {
+        handle_constant();
+    }
+    else if(expr->is_operator()) {
+        auto op = cast_to_ast_op(expr_node);
+        auto sym = std::get<operator_type>(op->tok->value);
+
+        if(op->is_postfix) {
+            handle_inc_dec(sym, true);
+        }
+        else if(op->is_unary) {
+            handle_unary_op(sym);
+        }
+        else {
+            switch(sym) {
+                case EQUAL: {
+                    handle_assignment();
+                    break;
+                }
+                case AND:
+                case OR: {
+                    handle_logical_op(sym);
+                    break;
+                }
+                case COMMA: {
+                    handle_comma_expr();
+                    break;
+                }
+                default: {
+                    handle_arithmetic_op(sym);
+                }
+            }
+        }
+    }
+    else if(expr->is_fn_call()) {
+        handle_fn_call();
+    }
+    else if(expr->is_array_subscript()) {
+        handle_array_subscript();
+    }
+    else {
+        CRITICAL_ASSERT_NOW("Invalid expr_node encountered during handle_node evaluation");
+    }
+
+    expr_node.reset();
+}
+
+void eval_expr::main_loop() {
+    while(!op_stack.empty() || expr_node) {
+        if(!expr_node) {
+            expr_node = fetch_stack_node(op_stack);
+        }
+        else {
+            if (hook())
+                continue;
+            if (expr_node->children.size()) {
+                auto child = fetch_child(expr_node);
+                op_stack.push(std::move(expr_node));
+                expr_node = std::move(child);
+            }
+            else {
+                handle_node();
+            }
+        }
+    }
+} 
+</code></pre>
+        <p>
+            <span class="code-span">eval_expr::main_loop</span> implements the dfs algorithm using an iterative method. <span class="code-span">handle_node()</span> calls the appropriate handler code method for a given node. This is pretty much all 
+            that the evaluator does. To understand the code generation process better, let us take a look at one of these handler methods.
+        </p>
+<pre><code><span class="language-tag">C++</span>
+void eval_expr::handle_indir() {
+    auto res_in = fetch_stack_node(res_stack);
+
+    //Must be a pointer
+    if(!res_in.type.is_pointer_type()) {
+        if(res_in.type.is_convertible_to_pointer_type()) {
+            res_in.type.convert_to_pointer_type();
+        }
+        else {
+            expr->print_error();
+            sim_log_error("'*' operator requires operand to be a pointer type");
+        }
+    }
+
+    //This will find the new type after applying dereference operator on it <I>(If it's pointer to int, then it is <em>resolved</em> to int)</I>
+    auto res_type = res_in.type.resolve_type();
+
+    if(res_type.is_void()) {
+        expr->print_error();
+        sim_log_error("'*' operator can only be used on a non void pointer type");
+    }
+
+    //This makes sure that we don't evaluate this operator during compile time (Like when it's used as part of an init expression in a global variable)
+    if(compile_only && res_in.is_constant && check_if_symbol(res_in.constant)) {
+        expr->print_error();
+        sim_log_error("'*' operator cannot be used to evaluate symbol during compile time");
+    }
+
+    expr_result res{res_type};
+    auto [base_type, is_signed] = res.type.get_simple_type();
+
+    res.expr_id = res_in.expr_id;
+    res.is_constant = res_in.is_constant;
+    res.constant = res_in.constant;
+
+    //If the dereference is within an "assignable context" then don't dereference, otherwise call the code generator 
+    if(!(is_assignable() || res_type.is_array_type() || res_type.is_function_type())) {
+        if(res_in.is_constant) {
+            res.expr_id = code_gen::call_code_gen(fn_intf, &Ifunc_translation::fetch_from_mem, res_in.constant, base_type, is_signed); 
+        }
+        else {
+            res.expr_id = code_gen::call_code_gen(fn_intf, &Ifunc_translation::fetch_from_mem, res_in.expr_id, base_type, is_signed); 
+        }
+    }
+
+    //Save the result of this expression onto the working stack, which is were we save the results of computed sub-expressions.
+    res.category = l_val_cat::INDIR;
+    res.is_lvalue = true;
+    res_stack.push(res);
+}
+</code></pre>
+        <p>
+            An expression of type <span class="code-span">* &ltexpr&gt </span> is going to be handled via the <span class="code-span">handle_indir()</span> function. This function pops off 
+            one object (since dereferencing is a unary operation) from <I>res_stack</I> which is the stack where we push the results of the subexpressions. The type of this object is checked to see if 
+            it is a pointer type. If it's not a pointer type, then we see if it can be reinterpreted as a pointer type. Now if it's not an <em>assignable context</em>, then we call the code-generator.
+            <em>Assignable context</em> is one where an operation is immediately followed by another operation which requires an L-value, such as '=', '&', '++' and '--' operators. We don't perform the 
+            dereferencing in this case as these operators require the <I>address</I> (In this case, address doesn't necessarily mean the location, but just refers to the container or variable itself). This is 
+            all there is to the evaluator, walk the tree, handle the node, call the code generator when appropriate, generate the result type and save the result on stack if required. 
+        </p>
+        <br>
+        <h2>
+            Code generator
+        </h2>
+        <p>
+            You may have noticed that we have an abstraction layer on top of our code generator in the architecture diagram. The code generator interface is provided in a virtual class and the 
+            actual implementation is generated as a separate library. This allows us to add another architecture without any modifications to code, other than the code-generator itself, therby providing 
+            good layer of abstraction. The code generator interface exposes these functions. This is found in <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/include/lib/code-gen.h">code-gen.h</a> 
+            file.
+        </p>
+<pre><code><span class="language-tag">C++</span>
+class Ifunc_translation : public Itrbase {
+public:
+//Declaration
+    virtual int declare_local_variable(std::string_view name, c_type type, bool is_signed, bool is_static) = 0;
+    virtual int declare_local_mem_variable(std::string_view name, bool is_static, size_t mem_var_size) = 0; 
+    virtual int declare_string_constant(std::string_view name, std::string_view value) = 0;
+    virtual void init_variable(int var_id, std::string_view constant) = 0;
+    virtual void free_result(int exp_id) = 0;
+    virtual int create_temporary_value(c_type type, bool is_signed) = 0;
+    virtual int set_value(int expr_id, std::string_view constant) = 0;
+
+//function
+    virtual int save_param(std::string_view name, c_type type, bool is_signed) = 0;
+    virtual void begin_call_frame(size_t num_args) = 0;
+    virtual void load_param(int exp_id) = 0;
+    virtual void load_param(std::string_view constant, c_type type, bool is_signed) = 0;
+    virtual int call_function(int exp_id, c_type ret_type, bool is_signed) = 0;
+    virtual int call_function(std::string_view name, c_type ret_type, bool is_signed) = 0;
+
+//Assign variable
+    virtual int assign_var(int var_id, int id) = 0; 
+    virtual int assign_var(int var_id, std::string_view constant) = 0; 
+    virtual int assign_to_mem(int id1, int id2) = 0;
+    virtual int assign_to_mem(int id, std::string_view constant, c_type type) = 0;
+    virtual int fetch_from_mem(int id, c_type type, bool is_signed) = 0;
+    virtual int fetch_from_mem(std::string_view constant, c_type type, bool is_signed) = 0;
+    virtual int fetch_global_var(int id) = 0;
+    virtual int assign_global_var(int id, int expr_id) = 0;
+    virtual int assign_global_var(int id, std::string_view constant) = 0;
+    virtual int get_address_of(std::string_view constant) = 0;
+    virtual int get_address_of(int id, bool is_mem, bool is_global) = 0;
+
+//Arithmetic operation
+    virtual int add(int id1, int id2) = 0; 
+    virtual int add(int id, std::string_view constant) = 0; 
+    virtual int sub(int id1, int id2) = 0;
+    virtual int sub(int id, std::string_view constant) = 0;
+    virtual int sub(std::string_view constant, int id) = 0;
+    virtual int mul(int id1, int id2) = 0;
+    virtual int mul(int id1, std::string_view constant) = 0;
+    virtual int div(int id1, std::string_view constant) = 0;
+    virtual int div(int id1, int id2) = 0;
+    virtual int div(std::string_view constant, int id) = 0;
+    virtual int modulo(int id1, int id2) = 0;
+    virtual int modulo(int id1, std::string_view constant) = 0;
+    virtual int modulo(std::string_view constant, int id) = 0;
+    virtual int bit_and(int id1, int id2) = 0;
+    virtual int bit_and(int id1, std::string_view constant) = 0;
+    virtual int bit_or(int id1, int id2) = 0;
+    virtual int bit_or(int id1, std::string_view constant) = 0;
+    virtual int bit_xor(int id1, int id2) = 0;
+    virtual int bit_xor(int id1, std::string_view constant) = 0;
+    virtual int bit_not(int id) = 0;
+    virtual int sl(int id1, int id2) = 0;
+    virtual int sl(int id1, std::string_view constant) = 0;
+    virtual int sl(std::string_view constant, int id) = 0;
+    virtual int sr(int id1, int id2) = 0;
+    virtual int sr(int id1, std::string_view constant) = 0;
+    virtual int sr(std::string_view constant, int id) = 0;
+    virtual int pre_inc(int id, c_type type, bool is_signed, size_t inc_count, bool is_mem, bool is_global) = 0;
+    virtual int pre_dec(int id, c_type type, bool is_signed, size_t inc_count, bool is_mem, bool is_global) = 0;
+    virtual int post_inc(int id, c_type type, bool is_signed, size_t inc_count, bool is_mem, bool is_global) = 0;
+    virtual int post_dec(int id, c_type type, bool is_signed, size_t inc_count, bool is_mem, bool is_global) = 0;
+    virtual int negate(int id) = 0;
+    
+//Type conversion
+    virtual int type_cast(int exp_id, c_type cast_type, bool cast_sign) = 0;
+
+//Conditional operation
+    virtual int if_gt(int id1, int id2) = 0;
+    virtual int if_lt(int id1, int id2) = 0;
+    virtual int if_eq(int id1, int id2) = 0;
+    virtual int if_neq(int id1, int id2) = 0;
+    virtual int if_gt(int id1, std::string_view constant) = 0;
+    virtual int if_lt(int id1, std::string_view constant) = 0;
+    virtual int if_eq(int id1, std::string_view constant) = 0;
+    virtual int if_neq(int id1, std::string_view constant) = 0;
+
+//Branch operation
+    virtual int create_label() = 0;
+    virtual void insert_label(int label_id) = 0;
+    virtual void branch_return(int exp_id) = 0;
+    virtual void branch_return(std::string_view constant) = 0;
+    virtual void fn_return(int exp_id) = 0;
+    virtual void fn_return(std::string_view constant) = 0;
+    virtual void branch(int label_id) = 0;
+    virtual void branch_if_z(int expr_id, int label_id) = 0;
+    virtual void branch_if_nz(int expr_id, int label_id) = 0;
+
+    virtual void generate_code() = 0;
+
+    virtual ~Ifunc_translation() = default;
+};
+</code></pre>
+        <p>
+            This interface is resolved by the implementation files residing in the top level lib directory. Currently we only have the implementation for the x64 architecture. The code generator 
+            works by saving results in registers. In x64, we use these registers for storing general purpose data. <b>rax, rbx, rcx, rdx, rsi, rdi, r8, r9</b>. We also have the 32, 16 and 8 bit versions of 
+            these registers. When an operation is computed (say, add 2 variables), the result of this operation is saved in a register and an id is generated which tracks this. If another operation 
+            (say, mul 2 variables) is invoked, a new free register is picked and the result for this operation is saved in that. The id generated for this operation is returned back to the evaluator. 
+            The evaluator saves this id along with some other metadata as the <em>result</em> of that expression. If no register is available, then we free up a register by saving it's contents into the stack. 
+            This way we never run into a resource crunch.
+        </p>
+        <p>
+            Before adding variables, we must first declare them. It them generates a unique id for that variable. Later, when we want to perform an operation on that variable, we use this id to 
+            refer back to that variable. Let us see an example.
+        </p>
+<pre><code><span class="language-tag">C++</span>
+auto tu = std::shared_ptr<Itranslation>(create_translation_unit());
+
+//Create a function (Name: test, ret_type:int, is_static:false)
+auto fn = tu->add_function("test", C_INT, false, false);
+
+//Create a non static unsigned int variable with the name "a"
+//Note: The name that we give the variable here doesn't matter (This is only used by the evaluator), but the id it returns is what the code gen uses to refer to it
+int var_id = fn->declare_local_variable("a", C_INT, false, false);
+
+//param1: The function instance, param2: the method we want to call, remaining params: depends on the method that is called
+//In this case param3: variable id, param4: constant that needs to be added with that variable
+//Thus, this call logically means, perform "a-35" and the return value is an ID which refers to the result of this expression
+int res_id = code_gen::call_code_gen(fn, &Ifunc_translation::add, var_id, "-35");
+
+//Use this res_id in another expression or discard it
+</code></pre>
+        <p>
+            This is how the code generator is able to generate the code for any type of operation. For the sake of completeness, I'll show the code for the add function within the code generator. 
+            <I>Note: Although, this is just how the x64 code generator is built, any other code generator that might be built into simc must also follow the same interface, where we use some sort of 
+                an ID mechanism to track results. This is important as the evaluator expects that type of behaviour. </I> 
+            For completeness sake, I'll show the code for how the add function is implemented.
+        </p>
+<pre><code class="language-cpp"><span class="language-tag">C++</span>
+int x64_func::add(int id, std::string_view constant) {
+    insert_comment("add constant");
+    auto [reg1, _, type] = unary_op_fetch(id);
+
+    insert_code("add{} ${}, %{}", type, constant, reg1);
+
+    return reg_status_list[reg1];
+}
+</code></pre>
+        <p>
+            <span class="code-span">unary_op_fetch(id)</span> fetches the register associated with the id that the caller provided. It also returns the type of this variable. 
+            <spam class="code-span">insert_code()</spam> adds the actual generated code into the code stream which is what is finally written to a file as assembly code. You can see that the code 
+            generated is self explanatory. Once that is over, the id associated with the result is returned back to the caller.
+        </p>
+        <br>
+        <h2>Final remarks</h2>
+        <p>
+            So this concludes our foray into making a compiler. Although I have lead with examples from my own compiler and it was for the C language, the topics I discussed are applicable to any language, 
+            especially the lexer and parser sections. I didn't include too much detail into this blog as it would just be a bunch of implementation stuff, which might change in your case. My objective through this series 
+            was to just motivate the user to write their own compiler, and use mine as a reference material, or if you are interested, you may even contribute directly to this repo as it lacks many features.  
+        </p>
         </div>
         <div class="navigator">
             <hr style="border-color:grey">
@@ -479,7 +780,7 @@ static void parse_expr() {
         <div class="contact-info"; style="display:flex;flex-direction:column;background-color:grey;color:lightgray;
             width:100%;min-height:10rem;text-align:center; justify-content: center;align-items:center;
             font-family:Raleway,'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-            flex-wrap:wrap;flex-grow:1">
+            flex-grow:1">
             <p style="margin-bottom:0;flex-grow:1;font-weight:bold;font-size:1.8em;">
                 Rohit Jacob George
             </p>
@@ -552,7 +853,7 @@ static void parse_expr() {
             }
         }
 
-        chooseOption(2);
+        chooseOption(3);
         function chooseOption(option) {
             if(option == existingOption)
                 return;
