@@ -466,6 +466,27 @@ static void parse_expr() {
         </div>
         <div class="wrapper" id="content-3" style="display:none">
             <p>
+                Even though the section is titled evaluation, I will also be talking about code generation, as they are 
+                both closely tied to one another. Evaluation is the process of <em>walking</em> the ast we generated earlier, 
+                and then informing the code generator to create the type of code we need. At this point, it is imperative that 
+                we look at the overall architecture of our compiler.  
+            </p>
+            <div class="img-class">
+                <img src="assets/arch.png" alt="simc compiler architecture">
+            </div>
+            <p>
+                Lexer and parser modules have already been discussed in the previous sections. The main focus of this 
+                section would be the remaining modules, which is <b>evaluator</b> and <b>code generator</b>. The diagnostics 
+                module which I have included here is only for the sake of completeness. It is responsible for handling the error printing 
+                in the console when something goes wrong. This module is responsible for showing you the line number and the specific token which 
+                caused the issue when compilation fails. Since it is an implementation detail, I will skip the discussion regarding it. 
+            </p>
+            <p>We start by walking the ast (we use a DFS approach here). For each node, we call a specific handling function. <I>For example, 
+                when we we visit a <em>declarator node</em>, the compiler adds the identifier to an identifier list along with it's 
+                properties, such as base type, modifiers, initial value etc. </I>
+            </p>
+            
+            <p>
                 For keeping the discussion brief and simple, let us consider how <em>simc</em> handles an expression node. The expression handler is written as a separate class. It's defined 
                 in <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/src/simcc/evaluator.cpp">evaluator.cpp</a> file. Let's take a look at a couple of methods from this class which 
                 implements the backbone.
