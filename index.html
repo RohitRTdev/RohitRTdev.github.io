@@ -126,7 +126,34 @@ x64 asm att syntax
             </p>
             <p>
                 Notice a few things here. First the variable's location. In C, variables are mostly stored in the stack, and it grows downwards in x64 arch. 
-                This is not the case always though (variables could also be located in static memory or heap). Also notice the offsets at which the variables are stored. They are allocated in such a way that all the variables are aligned on their natural boundary( int variables are aligned on 4 byte boundaries and pointers are aligned on 8 byte boundaries).
+                This is not the case always though (variables could also be located in static memory or heap). Also notice the offsets
+                at which the variables are stored. They are allocated in such a way that all the variables are aligned on their 
+                natural boundary( int variables are aligned on 4 byte boundaries and pointers are aligned on 8 byte boundaries).
+            </p>
+            <br>
+            <h2>
+                Points to remember
+            </h2>
+            <p>
+                <ul>
+                    <li>
+                        If you decide to implement function calls, this will require you to fix on a calling convention. <em>simc</em> 
+                        uses the sys-v abi, which means the arguments are loaded onto registers <b>rdi, rsi, rcx, rdx, r8, r9</b> respectively. Any 
+                        extra arguments are pushed on the stack.
+                    </li>
+                    <li>
+                        Array and struct arguments are called <em>memory arguments</em>. They are passed by 
+                        reference (which means their memory location is passed on a register instead of the actual content).
+                    </li>
+                    <li>
+                        If struct or union is passed by value, then a copy of it is first made on the stack, 
+                        and a reference to that copy is sent as an argument. This copy gets destroyed as soon as 
+                        the function returns (lifetime is same as the scope of the called function). 
+                        
+                    </li>
+                </ul>
+                <em>simc</em> doesn't implement structs or unions, but you can take that up as an exercise if you like. 
+                With that said, let's move on to first stage of compilation, <b>lexing</b>.
             </p>
         </div>
         <div class="wrapper" id="content-1" style="display:none">
@@ -301,7 +328,7 @@ x64 asm att syntax
             <p>
                A <I>declaration list</I> contains multiple comma separated declarations. A declaration contains a 
                <I>declarator</I>. A declarator could contain an identifier (it's optional since abstract declarators doesn't contain identifier). 
-               Declarator's could also contain modifiers (such as pointer or array declarator). Our case is a very simple declarator that contains 
+               Declarators could also contain modifiers (such as pointer or array declarator). Our case is a very simple declarator that contains 
                only an identifier (In C parlance, this is called an unmodified type).  
             </p>
             <p>
@@ -425,6 +452,7 @@ static void parse_expr() {
             The <em>reduce</em> function is different for different states. If the state hits the <b>no</b> condition, then it simply proceeds to the <b>no</b> state. 
         </p>
         <p>
+            Let us try to see how our parser would work for the simplified grammar I mentioned earlier. 
             When we walk through the states, we follow these additional rules. <br>
             <I>Note: This is only valid for expression parsing.</I>
             <ul>
@@ -461,7 +489,8 @@ static void parse_expr() {
 </pre>
         <p>
             When done with <em>expr_reduction</em>, we should only be left with one node in the <em>parser stack</em>. This node should represent the ast for our expression. All 
-            the code for the parser can be found under parser.cpp and the state-machine logic is implemented in state-machine.cpp.
+            the code for the parser can be found under <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/src/simcc/parser.cpp">parser.cpp</a> and the 
+            state-machine logic is implemented in <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/src/simcc/state-machine.cpp">state-machine.cpp</a>.
         </p>
         </div>
         <div class="wrapper" id="content-3" style="display:none">
@@ -481,7 +510,8 @@ static void parse_expr() {
                 in the console when something goes wrong. This module is responsible for showing you the line number and the specific token which 
                 caused the issue when compilation fails. Since it is an implementation detail, I will skip the discussion regarding it. 
             </p>
-            <p>We start by walking the ast (we use a DFS approach here). For each node, we call a specific handling function. <I>For example, 
+            <p>
+                We start by walking the ast (we use a DFS approach here). For each node, we call a specific handling function. <I>For example, 
                 when we we visit a <em>declarator node</em>, the compiler adds the identifier to an identifier list along with it's 
                 properties, such as base type, modifiers, initial value etc. </I>
             </p>
@@ -569,6 +599,7 @@ void eval_expr::main_loop() {
             that the evaluator does. To understand the code generation process better, let us take a look at one of these handler methods.
         </p>
 <pre><code><span class="language-tag">C++</span>
+//Handles pointer dereference operation
 void eval_expr::handle_indir() {
     auto res_in = fetch_stack_node(res_stack);
 
@@ -625,7 +656,7 @@ void eval_expr::handle_indir() {
             one object (since dereferencing is a unary operation) from <I>res_stack</I> which is the stack where we push the results of the subexpressions. The type of this object is checked to see if 
             it is a pointer type. If it's not a pointer type, then we see if it can be reinterpreted as a pointer type. Now if it's not an <em>assignable context</em>, then we call the code-generator.
             <em>Assignable context</em> is one where an operation is immediately followed by another operation which requires an L-value, such as '=', '&', '++' and '--' operators. We don't perform the 
-            dereferencing in this case as these operators require the <I>address</I> (In this case, address doesn't necessarily mean the location, but just refers to the container or variable itself). This is 
+            dereferencing in this case as these operators require the <I>address</I> (In this case, address doesn't necessarily mean the location, but just refers logically to the container or variable itself). This is 
             all there is to the evaluator, walk the tree, handle the node, call the code generator when appropriate, generate the result type and save the result on stack if required. 
         </p>
         <br>
@@ -634,7 +665,7 @@ void eval_expr::handle_indir() {
         </h2>
         <p>
             You may have noticed that we have an abstraction layer on top of our code generator in the architecture diagram. The code generator interface is provided in a virtual class and the 
-            actual implementation is generated as a separate library. This allows us to add another architecture without any modifications to code, other than the code-generator itself, therby providing 
+            actual implementation is generated as a separate library. This allows us to add another architecture without any modifications to code, other than the code-generator itself, thereby providing 
             good layer of abstraction. The code generator interface exposes these functions. This is found in <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/include/lib/code-gen.h">code-gen.h</a> 
             file.
         </p>
@@ -742,7 +773,7 @@ public:
             This way we never run into a resource crunch.
         </p>
         <p>
-            Before adding variables, we must first declare them. It them generates a unique id for that variable. Later, when we want to perform an operation on that variable, we use this id to 
+            Before adding variables, we must first declare them. It then generates a unique id for that variable. Later, when we want to perform an operation on that variable, we use this id to 
             refer back to that variable. Let us see an example.
         </p>
 <pre><code><span class="language-tag">C++</span>
@@ -764,31 +795,33 @@ int res_id = code_gen::call_code_gen(fn, &Ifunc_translation::add, var_id, "-35")
 </code></pre>
         <p>
             This is how the code generator is able to generate the code for any type of operation. For the sake of completeness, I'll show the code for the add function within the code generator. 
-            <I>Note: Although, this is just how the x64 code generator is built, any other code generator that might be built into simc must also follow the same interface, where we use some sort of 
-                an ID mechanism to track results. This is important as the evaluator expects that type of behaviour. </I> 
-            For completeness sake, I'll show the code for how the add function is implemented.
-        </p>
+        <I>Note: Although, this is just how the x64 code generator is built, any other code generator that might be built into simc must also follow the same interface, where we use some sort of 
+            an ID mechanism to track results. This is important as the evaluator expects that type of behaviour. </I> 
+    </p>
 <pre><code class="language-cpp"><span class="language-tag">C++</span>
 int x64_func::add(int id, std::string_view constant) {
-    insert_comment("add constant");
-    auto [reg1, _, type] = unary_op_fetch(id);
+insert_comment("add constant");
+auto [reg1, _, type] = unary_op_fetch(id);
 
-    insert_code("add{} ${}, %{}", type, constant, reg1);
+insert_code("add{} ${}, %{}", type, constant, reg1);
 
-    return reg_status_list[reg1];
+return reg_status_list[reg1];
 }
 </code></pre>
         <p>
             <span class="code-span">unary_op_fetch(id)</span> fetches the register associated with the id that the caller provided. It also returns the type of this variable. 
-            <spam class="code-span">insert_code()</spam> adds the actual generated code into the code stream which is what is finally written to a file as assembly code. You can see that the code 
-            generated is self explanatory. Once that is over, the id associated with the result is returned back to the caller.
+            <spam class="code-span">insert_code()</spam> adds the actual generated code into the code stream which is what is finally written to a file as assembly. The code generated 
+            here would be <span class="code-span">addl $-35, %eax</span>. <I>This assumes that the variable type is int and 
+            that the variable was saved in rax register. Note how the correct version of the register (eax and not rax) was chosen. This is one of 
+            the reasons why the code generator requires the type of the variable being saved. </I>Once that is over,
+            the id associated with the result is returned back to the caller.
         </p>
         <br>
         <h2>Final remarks</h2>
         <p>
             So this concludes our foray into making a compiler. Although I have lead with examples from my own compiler and it was for the C language, the topics I discussed are applicable to any language, 
             especially the lexer and parser sections. I didn't include too much detail into this blog as it would just be a bunch of implementation stuff, which might change in your case. My objective through this series 
-            was to just motivate the user to write their own compiler, and use mine as a reference material, or if you are interested, you may even contribute directly to this repo as it lacks many features.  
+            was to just motivate the user to write their own compiler, and use mine as a reference material, or if you are interested, you may even contribute directly to this repo. Happy coding!😄
         </p>
         </div>
         <div class="navigator">
@@ -807,7 +840,6 @@ int x64_func::add(int id, std::string_view constant) {
             </p>
             <p style="flex-grow:1;font-size:1.1em">In case of queries or mistakes you may find, please reach out 
             to me via my email - <u>rohit20011002@gmail.com</u></p>
-            <p>Special thanks to P Pavithra for help with the design</p>
             <div class="row-break"></div>
             <div class="icons">
                 <a target="_blank" href="https://www.linkedin.com/in/rohit-jacob-george-3190361b3" class="social-media-icon">
@@ -874,7 +906,6 @@ int x64_func::add(int id, std::string_view constant) {
             }
         }
 
-        chooseOption(3);
         function chooseOption(option) {
             if(option == existingOption)
                 return;
