@@ -186,7 +186,7 @@ x64 asm att syntax
         <p>
             All of the lexer code is included in the <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/src/simcc/lexer.cpp">lexer.cpp</a> file under src/simcc. 
             It simply iterates through the list of characters and tries to generate a <b>token object</b>. 
-            This object is defined in <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/include/compiler/token.h">token.h</a> header file under include/compiler folder.
+            This object is defined in <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/include/core/token.h">token.h</a> header file under include/core folder.
         </p>
 
         <p>
@@ -491,7 +491,7 @@ static void parse_expr() {
         <p>
             When done with <em>expr_reduction</em>, we should only be left with one node in the <em>parser stack</em>. This node should represent the ast for our expression. All 
             the code for the parser can be found under <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/src/simcc/parser.cpp">parser.cpp</a> and the 
-            state-machine logic is implemented in <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/src/simcc/state-machine.cpp">state-machine.cpp</a>.
+            state-machine logic is implemented in <a target="_blank" href="https://github.com/RohitRTdev/simc/blob/master/src/core/state-machine.cpp">state-machine.cpp</a>.
         </p>
         </div>
         <div class="wrapper" id="content-3" style="display:none">
